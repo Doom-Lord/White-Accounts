@@ -7,7 +7,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%A5%9B%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@500;700&family=Inter:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Baloo+2:wght@600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=notagline1">
+<link rel="stylesheet" href="styles.css?v=history1">
 </head>
 <body>
 <div class="mk-wrap">
@@ -27,6 +27,7 @@
     <button type="button" class="mk-nav-btn" data-panel="receipt">🧾 Receipt</button>
     <button type="button" class="mk-nav-btn" data-panel="buyers">👥 Buyers</button>
     <button type="button" class="mk-nav-btn" data-panel="settings">⚙️ Settings</button>
+    <button type="button" class="mk-nav-btn" data-panel="analysis">📊 Customer Analysis</button>
   </nav>
 
   <!-- ========== ENTRY ========== -->
@@ -129,6 +130,34 @@
     <div id="buyerList" class="mk-buyer-list"></div>
   </section>
 
+  <!-- ========== CUSTOMER ANALYSIS ========== -->
+  <section class="mk-panel" id="panel-analysis">
+    <div class="mk-panel-head">
+      <div>
+        <h2>Customer Analysis</h2>
+        <p>Read-only milk purchase history across archived months and current entries</p>
+      </div>
+    </div>
+    <div class="mk-analysis-controls">
+      <div class="mk-field">
+        <label for="analysisBuyer">Customer</label>
+        <select id="analysisBuyer"><option value="">All customers</option></select>
+      </div>
+      <div class="mk-field">
+        <label for="analysisRangeMode">Period</label>
+        <select id="analysisRangeMode">
+          <option value="all">All time (until now)</option>
+          <option value="custom">Custom month range</option>
+        </select>
+      </div>
+      <div class="mk-analysis-range" id="analysisCustomRange" hidden>
+        <div class="mk-field"><label for="analysisFrom">From</label><input id="analysisFrom" type="month"></div>
+        <div class="mk-field"><label for="analysisTo">To</label><input id="analysisTo" type="month"></div>
+      </div>
+    </div>
+    <div id="analysisResults"></div>
+  </section>
+
   <!-- ========== SETTINGS ========== -->
   <section class="mk-panel" id="panel-settings">
     <div class="mk-panel-head">
@@ -177,6 +206,15 @@
     </div>
 
     <div class="mk-card" style="margin-top:16px;">
+      <h3 style="margin:0 0 10px;font-family:'Zilla Slab',Georgia,serif;color:var(--red-deep);font-size:16px;">Historical milk archive</h3>
+      <p class="mk-tip">Import an archive JSON separately. It is read-only and does not modify current entries, receipts, buyer balances or live billing. The full JSON Export above will include your archive for future backups.</p>
+      <div class="mk-actions">
+        <button type="button" id="archiveImportBtn" class="mk-btn mk-btn--primary">⬆️ Import historical archive</button>
+        <input type="file" id="archiveImportFile" accept="application/json,.json" hidden>
+      </div>
+    </div>
+
+    <div class="mk-card" style="margin-top:16px;">
       <h3 style="margin:0 0 10px;font-family:'Zilla Slab',Georgia,serif;color:var(--red-deep);font-size:16px;">Clear data</h3>
       <div class="mk-warn-box">
         Safari makes site cache hard to clear. This button deletes all saved app data
@@ -218,6 +256,7 @@
 
 <div id="toast" class="mk-toast"></div>
 
-<script src="app.js?v=notagline1"></script>
+<script src="analysis.js?v=history1"></script>
+<script src="app.js?v=history1"></script>
 </body>
 </html>
