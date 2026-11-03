@@ -235,6 +235,43 @@
     });
     return {groups:groups, months:months};
   }
+  // Populate real month selectors instead of leaving unsupported browser month fields blank.
+  // Include months between the first and last recorded month, even if some are empty.
+  function populateMonthRange(data, selected) {
+    var now = new Date();
+    var todayMonth = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+    var recorded = Object.keys(data.months).filter(function (ym) {
+      if (!validYM(ym) || ym > todayMonth) return false;
+      var entries = data.months[ym];
+      if (selected) {
+        return !!(entries[selected] && Object.keys(entries[selected].days || {}).length);
+      }
+      return Object.keys(entries).some(function (id) {
+        return Object.keys(entries[id].days || {}).length > 0;
+      });
+    }).sort();
+    if (!recorded.length) recorded = [todayMonth];
+    var first = recorded[0], last = recorded[recorded.length - 1];
+    var parts = first.split('-').map(Number);
+    var d = new Date(parts[0], parts[1] - 1, 1);
+    var months = [];
+    while (months.length < 1200) {
+      var ym = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+      if (ym > last) break;
+      months.push(ym);
+      d.setMonth(d.getMonth() + 1);
+    }
+    var markup = months.map(function (ym) {
+      return '<option value="' + ym + '">' + label(ym) + '</option>';
+    }).join('');
+    var fromSelect = $('analysisFrom'), toSelect = $('analysisTo');
+    var oldFrom = fromSelect.value, oldTo = toSelect.value;
+    fromSelect.innerHTML = markup;
+    toSelect.innerHTML = markup;
+    fromSelect.value = months.indexOf(oldFrom) >= 0 ? oldFrom : first;
+    toSelect.value = months.indexOf(oldTo) >= 0 ? oldTo : last;
+  }
+
   function render() {
     if (!$('analysisBuyer') || !getDB) return;
     var db = getDB(), data = collect(db), picker = $('analysisBuyer');
@@ -248,6 +285,7 @@
     picker.innerHTML = options.join('');
     if (Object.prototype.hasOwnProperty.call(data.groups, old)) picker.value = old;
     var selected = picker.value;
+    populateMonthRange(data, selected);
     var custom = $('analysisRangeMode').value === 'custom';
     $('analysisCustomRange').hidden = !custom;
     var from = custom ? $('analysisFrom').value : '';
