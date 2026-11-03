@@ -7,7 +7,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%A5%9B%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@500;700&family=Inter:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Baloo+2:wght@600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=history1">
+<link rel="stylesheet" href="styles.css?v=close1">
 </head>
 <body>
 <div class="mk-wrap">
@@ -43,6 +43,7 @@
     </div>
     <div id="entryMonthPicker" class="mk-month-picker mk-month-picker--bar" data-role="month-picker"></div>
     <p class="mk-entry-tip">Defaults to <b>last month</b> (milk you sold then). Tap Jan–Dec to switch.</p>
+    <div id="entryMonthStatus" class="mk-month-closing" role="region" aria-label="Monthly archive controls"></div>
     <div id="entryGridHost"></div>
     <div id="entryTotals" class="mk-totals-bar"></div>
   </section>
@@ -199,7 +200,7 @@
         Clearing browser cache can erase everything — export JSON backups regularly.
       </div>
       <div class="mk-actions">
-        <button type="button" id="exportBtn" class="mk-btn mk-btn--primary">⬇️ JSON Export</button>
+        <button type="button" id="exportBtn" class="mk-btn mk-btn--primary">⬇️ Full JSON Backup</button>
         <button type="button" id="importBtn" class="mk-btn mk-btn--ghost">⬆️ JSON Import</button>
         <input type="file" id="importFile" accept="application/json,.json" hidden>
       </div>
@@ -210,8 +211,11 @@
       <p class="mk-tip">Import an archive JSON separately. It is read-only and does not modify current entries, receipts, buyer balances or live billing. The full JSON Export above will include your archive for future backups.</p>
       <div class="mk-actions">
         <button type="button" id="archiveImportBtn" class="mk-btn mk-btn--primary">⬆️ Import historical archive</button>
+        <button type="button" id="archiveExportBtn" class="mk-btn mk-btn--ghost">⬇️ Export historical JSON</button>
+        <button type="button" id="archiveCsvBtn" class="mk-btn mk-btn--ghost">⬇️ Export historical CSV</button>
         <input type="file" id="archiveImportFile" accept="application/json,.json" hidden>
       </div>
+      <p class="mk-tip">Historical exports include your imported archive and months you have manually closed. Open months are included in the Full JSON Backup above, but not in historical-only exports.</p>
     </div>
 
     <div class="mk-card" style="margin-top:16px;">
@@ -256,7 +260,7 @@
 
 <div id="toast" class="mk-toast"></div>
 
-<script src="analysis.js?v=billed1"></script>
-<script src="app.js?v=history1"></script>
+<script src="analysis.js?v=close1"></script>
+<script src="app.js?v=close1"></script>
 </body>
 </html>

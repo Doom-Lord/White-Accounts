@@ -113,7 +113,7 @@
   function buyersForMonth(ym) {
     const month = DB.months[ym];
     const monthIds = month ? Object.keys(month.buyers || {}) : [];
-    return allBuyersSorted().filter((b) => b.active || monthIds.includes(b.id));
+    return allBuyersSorted().filter((b) => monthIsClosed(ym) ? monthIds.includes(b.id) : b.active || monthIds.includes(b.id));
   }
 
   function loadData() {
@@ -142,6 +142,36 @@
 
   let DB = loadData();
 
+  // Closed months stay in DB.months to preserve existing balance carry-forward.
+  function monthIsClosed(ym) {
+    return !!(DB.closedMonths && DB.closedMonths[ym]);
+  }
+
+  function monthHasRecordedDays(ym) {
+    const month = DB.months[ym];
+    return !!(month && Object.values(month.buyers || {}).some(
+      (entry) => Object.keys((entry && entry.days) || {}).length > 0
+    ));
+  }
+
+  function renderMonthClosing() {
+    const host = $('entryMonthStatus');
+    if (!host) return;
+    const ym = getSelectedYM();
+    if (monthIsClosed(ym)) {
+      const stamp = DB.closedMonths[ym].closedAt || '';
+      host.innerHTML = `<span>🔒 <b>${escapeHtml(monthLabel(ym))} archived</b> — read-only${stamp ? ' · closed ' + escapeHtml(stamp.slice(0, 10)) : ''}. This does not mean payment was received.</span>
+        <button type="button" class="mk-btn mk-btn--ghost mk-btn--sm" data-close-month-action="reopen">Reopen for correction</button>`;
+      host.classList.add('mk-month-closing--closed');
+      return;
+    }
+    host.classList.remove('mk-month-closing--closed');
+    const past = ym < currentYM();
+    const hasRecords = monthHasRecordedDays(ym);
+    host.innerHTML = `<span>${past ? 'Check ' + escapeHtml(monthLabel(ym)) + ' before closing.' : 'Close the month only after it ends and its milk entries are final.'} Closing locks entries, not payments.</span>
+      <button type="button" class="mk-btn mk-btn--ghost mk-btn--sm" data-close-month-action="close" ${past && hasRecords ? '' : 'disabled'}>🔒 Close month &amp; archive</button>`;
+  }
+
   function paymentNumber() {
     return (DB.settings.paymentNumber || DB.settings.contactMobile || '').trim();
   }
@@ -159,6 +189,7 @@
 
   function ensureMonth(ym) {
     if (!DB.months[ym]) DB.months[ym] = { buyers: {} };
+    if (monthIsClosed(ym)) return DB.months[ym];
     const buyers = activeBuyersSorted();
     const prevKey = prevYM(ym);
     const prevMonth = DB.months[prevKey];
@@ -411,6 +442,10 @@
     ensureMonth(ym);
     saveData(DB);
     const monthData = DB.months[ym];
+    const closed = monthIsClosed(ym);
+    $('addBuyerBtn').disabled = closed;
+    $('pasteBuyersBtn').disabled = closed;
+    $('pasteClipboardBtn').disabled = closed;
 
     if (!buyers.length) {
       list.innerHTML = `
@@ -442,16 +477,16 @@
         </div>
         <div class="mk-buyer-finance">
           <label>Rate ₹
-            <input type="number" step="0.5" min="0" inputmode="decimal" data-fin="rate" value="${fmtNum(rateVal)}" ${b.active ? '' : 'disabled'}>
+            <input type="number" step="0.5" min="0" inputmode="decimal" data-fin="rate" value="${fmtNum(rateVal)}" ${b.active && !closed ? '' : 'disabled'}>
           </label>
           <label>Prev. balance
-            <input type="number" step="1" inputmode="decimal" data-fin="openingBalance" value="${fmtNum(openingVal)}" title="Negative (−) = paid this much less last month" ${b.active && monthData.buyers[b.id] ? '' : 'disabled'}>
+            <input type="number" step="1" inputmode="decimal" data-fin="openingBalance" value="${fmtNum(openingVal)}" title="Negative (−) = paid this much less last month" ${b.active && monthData.buyers[b.id] && !closed ? '' : 'disabled'}>
           </label>
         </div>
         <div class="mk-buyer-actions">
           <button type="button" class="mk-btn mk-btn--ghost mk-btn--sm" data-act="up" ${idx === 0 ? 'disabled' : ''}>↑</button>
           <button type="button" class="mk-btn mk-btn--ghost mk-btn--sm" data-act="down" ${idx === buyers.length - 1 ? 'disabled' : ''}>↓</button>
-          <button type="button" class="mk-btn mk-btn--ghost mk-btn--sm" data-act="edit">Edit</button>
+          <button type="button" class="mk-btn mk-btn--ghost mk-btn--sm" data-act="edit" ${closed ? 'disabled' : ''}>Edit</button>
           <button type="button" class="mk-btn mk-btn--danger mk-btn--sm" data-act="toggle">${b.active ? 'Remove' : 'Restore'}</button>
         </div>
       </div>`;
@@ -464,6 +499,7 @@
 
   function bindBuyers() {
     $('addBuyerBtn').addEventListener('click', () => {
+      if (monthIsClosed(getSelectedYM())) { showToast('Reopen the archived month to edit buyers'); return; }
       const name = normalizeBuyerName($('newBuyerName').value);
       const err = $('buyerError');
       if (!name) { err.textContent = 'Please enter a name.'; return; }
@@ -479,6 +515,7 @@
     });
 
     $('pasteBuyersBtn').addEventListener('click', () => {
+      if (monthIsClosed(getSelectedYM())) { showToast('Reopen the archived month to edit buyers'); return; }
       const names = parseBuyerNames($('pasteBuyers').value);
       const err = $('buyerError');
       if (!names.length) {
@@ -524,6 +561,7 @@
     $('buyerList').addEventListener('click', (e) => {
       const btn = e.target.closest('[data-act]');
       if (!btn) return;
+      if (monthIsClosed(getSelectedYM())) { showToast('This month is archived; reopen it to edit buyers'); return; }
       const item = btn.closest('.mk-buyer-item');
       const id = item.dataset.id;
       const buyers = allBuyersSorted();
@@ -568,6 +606,7 @@
     $('buyerList').addEventListener('input', (e) => {
       const input = e.target;
       if (!input.matches('input[data-fin]')) return;
+      if (monthIsClosed(getSelectedYM())) { renderBuyers(); showToast('This month is archived'); return; }
       const item = input.closest('.mk-buyer-item');
       if (!item) return;
       const id = item.dataset.id;
@@ -600,6 +639,7 @@
       if (e.target === $('buyerModal')) $('buyerModal').classList.remove('mk-modal-backdrop--show');
     });
     $('saveBuyerBtn').addEventListener('click', () => {
+      if (monthIsClosed(getSelectedYM())) { showToast('Reopen archived month before editing'); $('buyerModal').classList.remove('mk-modal-backdrop--show'); return; }
       const id = $('editBuyerId').value;
       const b = DB.buyers.find((x) => x.id === id);
       if (!b) return;
@@ -638,6 +678,7 @@
     const numDays = daysInMonth(year, month);
     ensureMonth(ym);
     saveData(DB);
+    renderMonthClosing();
 
     const buyers = buyersForMonth(ym);
     const monthData = DB.months[ym];
@@ -709,7 +750,7 @@
       const rowClass = todayDay === d ? 'mk-today' : '';
       html += `<tr class="${rowClass}" data-day="${d}" id="entry-day-${d}"><td>${d}</td>`;
       buyers.forEach((b, bi) => {
-        const entry = monthData.buyers[b.id];
+        const entry = monthData.buyers[b.id] || { days: {} };
         const val = entry.days[String(d)];
         const display = (val === undefined || val === null || val === '') ? '' : fmtNum(val);
         html += `<td><input type="number" step="0.5" min="0" inputmode="decimal"
@@ -723,16 +764,21 @@
     html += '<tr class="mk-footer-row"><td>Total</td>';
     let farmLitres = 0;
     buyers.forEach((b) => {
-      const c = calcBuyer(monthData.buyers[b.id]);
+      const c = calcBuyer(monthData.buyers[b.id] || { days: {} });
       farmLitres += c.total;
       html += `<td>${fmtNum(c.total)}</td>`;
     });
     html += '</tr></tbody></table></div>';
     $('entryGridHost').innerHTML = html;
+    if (monthIsClosed(ym)) {
+      $('entryGridHost').querySelectorAll('input, select, button').forEach((control) => {
+        control.disabled = true;
+      });
+    }
 
     $('entryTotals').innerHTML =
       `<span>Total milk: <b>${fmtNum(farmLitres)} L</b></span>` +
-      `<span class="mk-tip">Rate & balance → Buyers tab</span>`;
+      `<span class="mk-tip">${monthIsClosed(ym) ? '🔒 Archived — read-only' : 'Rate & balance → Buyers tab'}</span>`;
   }
 
   function refreshEntryFooter() {
@@ -744,17 +790,48 @@
     const footerCells = document.querySelectorAll('.mk-entry-table .mk-footer-row td');
     let farmLitres = 0;
     buyers.forEach((b, i) => {
-      const c = calcBuyer(monthData.buyers[b.id]);
+      const c = calcBuyer(monthData.buyers[b.id] || {days:{}});
       farmLitres += c.total;
       if (footerCells[i + 1]) footerCells[i + 1].textContent = fmtNum(c.total);
     });
     $('entryTotals').innerHTML =
       `<span>Total milk: <b>${fmtNum(farmLitres)} L</b></span>` +
-      `<span class="mk-tip">Rate & balance → Buyers tab</span>`;
+      `<span class="mk-tip">${monthIsClosed(ym) ? '🔒 Archived — read-only' : 'Rate & balance → Buyers tab'}</span>`;
+    renderMonthClosing();
   }
 
   function bindEntry() {
     const grid = $('entryGridHost');
+
+    $('entryMonthStatus').addEventListener('click', (event) => {
+      const button = event.target.closest('[data-close-month-action]');
+      if (!button) return;
+      const ym = getSelectedYM();
+      if (button.dataset.closeMonthAction === 'close') {
+        if (ym >= currentYM() || !monthHasRecordedDays(ym) || monthIsClosed(ym)) {
+          showToast('Only completed months with milk entries can be archived');
+          return;
+        }
+        if (!window.confirm(`Close ${monthLabel(ym)} and make it read-only?\n\nAll milk quantities, rates and bills remain saved, including in your full JSON backups. This does not mean customers have paid. You can reopen for corrections.`)) return;
+        if (!DB.closedMonths) DB.closedMonths = {};
+        DB.closedMonths[ym] = {closedAt: new Date().toISOString()};
+        try { saveData(DB); }
+        catch (err) { delete DB.closedMonths[ym]; showToast('Unable to save the closed month'); return; }
+      } else if (button.dataset.closeMonthAction === 'reopen') {
+        if (!monthIsClosed(ym)) return;
+        if (!window.confirm(`Reopen ${monthLabel(ym)} for corrections?\n\nAny later months' saved opening balances will NOT be recalculated automatically. Review those balances if you change old records.`)) return;
+        const previous = DB.closedMonths[ym];
+        delete DB.closedMonths[ym];
+        try { saveData(DB); }
+        catch (err) { DB.closedMonths[ym] = previous; showToast('Unable to reopen the month'); return; }
+      } else {
+        return;
+      }
+      renderEntry();
+      renderBuyers();
+      if (window.WhiteAccountsAnalysis) window.WhiteAccountsAnalysis.render();
+      showToast(monthIsClosed(ym) ? 'Month archived and locked ✅' : 'Month reopened for corrections');
+    });
 
     function updateMultiSelectionUI() {
       const buyer = buyersForMonth(getSelectedYM()).find((b) => b.id === selectedEntryBuyerId);
@@ -785,6 +862,7 @@
     grid.addEventListener('click', (e) => {
       const input = e.target.closest('.mk-entry-table input[data-buyer]');
       if (input && e.altKey) {
+        if (monthIsClosed(getSelectedYM())) { showToast('Archived month is read-only'); return; }
         e.preventDefault();
         const buyerId = input.dataset.buyer;
         const day = Number(input.dataset.day);
@@ -810,6 +888,7 @@
         return;
       }
       if (!e.target.closest('#multiMilkApplyBtn')) return;
+      if (monthIsClosed(getSelectedYM())) { showToast('Archived month is read-only'); return; }
       const rawQty = $('multiMilkQty').value.trim();
       const qty = Number(rawQty);
       if (!selectedEntryBuyerId || !selectedEntryDays.size) return;
@@ -836,6 +915,7 @@
 
     $('entryGridHost').addEventListener('click', (e) => {
       if (!e.target.closest('#bulkMilkFillBtn')) return;
+      if (monthIsClosed(getSelectedYM())) { showToast('Archived month is read-only'); return; }
       const buyerId = $('bulkMilkBuyer').value;
       const rawQty = $('bulkMilkQty').value.trim();
       const qty = Number(rawQty);
@@ -902,6 +982,7 @@
     $('entryGridHost').addEventListener('input', (e) => {
       const input = e.target;
       if (!input.matches('input[data-buyer]')) return;
+      if (monthIsClosed(getSelectedYM())) { renderEntry(); showToast('Archived month is read-only'); return; }
       const ym = getSelectedYM();
       ensureMonth(ym);
       const buyerId = input.dataset.buyer;
@@ -925,6 +1006,7 @@
     $('entryGridHost').addEventListener('keydown', (e) => {
       const input = e.target;
       if (!input.matches('input[data-buyer]')) return;
+      if (monthIsClosed(getSelectedYM())) { e.preventDefault(); return; }
 
       if (e.key === 'Backspace' || e.key === 'Delete') {
         e.preventDefault();
