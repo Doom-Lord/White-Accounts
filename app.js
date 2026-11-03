@@ -225,6 +225,7 @@
     if (name === 'receipt') renderReceiptForm();
     if (name === 'buyers') renderBuyers();
     if (name === 'settings') renderSettings();
+    if (name === 'analysis' && window.WhiteAccountsAnalysis) window.WhiteAccountsAnalysis.render();
   }
 
   $('mainNav').addEventListener('click', (e) => {
@@ -1589,6 +1590,7 @@
           renderEntry();
           renderLedger();
           renderReceiptForm();
+          if (window.WhiteAccountsAnalysis) window.WhiteAccountsAnalysis.render();
           showToast('Import successful ✅');
         } catch (err) {
           showToast('Could not read file');
@@ -1629,6 +1631,13 @@
     bindLedger();
     bindReceipt();
     bindBackup();
+    if (window.WhiteAccountsAnalysis) {
+      window.WhiteAccountsAnalysis.init({
+        getDB: () => DB,
+        saveDB: () => saveData(DB),
+        toast: showToast
+      });
+    }
 
     renderEntry();
   }
