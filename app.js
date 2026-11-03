@@ -678,6 +678,7 @@
     const numDays = daysInMonth(year, month);
     ensureMonth(ym);
     saveData(DB);
+    renderMonthClosing();
 
     const buyers = buyersForMonth(ym);
     const monthData = DB.months[ym];
@@ -749,7 +750,7 @@
       const rowClass = todayDay === d ? 'mk-today' : '';
       html += `<tr class="${rowClass}" data-day="${d}" id="entry-day-${d}"><td>${d}</td>`;
       buyers.forEach((b, bi) => {
-        const entry = monthData.buyers[b.id];
+        const entry = monthData.buyers[b.id] || { days: {} };
         const val = entry.days[String(d)];
         const display = (val === undefined || val === null || val === '') ? '' : fmtNum(val);
         html += `<td><input type="number" step="0.5" min="0" inputmode="decimal"
@@ -763,16 +764,21 @@
     html += '<tr class="mk-footer-row"><td>Total</td>';
     let farmLitres = 0;
     buyers.forEach((b) => {
-      const c = calcBuyer(monthData.buyers[b.id]);
+      const c = calcBuyer(monthData.buyers[b.id] || { days: {} });
       farmLitres += c.total;
       html += `<td>${fmtNum(c.total)}</td>`;
     });
     html += '</tr></tbody></table></div>';
     $('entryGridHost').innerHTML = html;
+    if (monthIsClosed(ym)) {
+      $('entryGridHost').querySelectorAll('input, select, button').forEach((control) => {
+        control.disabled = true;
+      });
+    }
 
     $('entryTotals').innerHTML =
       `<span>Total milk: <b>${fmtNum(farmLitres)} L</b></span>` +
-      `<span class="mk-tip">Rate & balance → Buyers tab</span>`;
+      `<span class="mk-tip">${monthIsClosed(ym) ? '🔒 Archived — read-only' : 'Rate & balance → Buyers tab'}</span>`;
   }
 
   function refreshEntryFooter() {
@@ -784,17 +790,47 @@
     const footerCells = document.querySelectorAll('.mk-entry-table .mk-footer-row td');
     let farmLitres = 0;
     buyers.forEach((b, i) => {
-      const c = calcBuyer(monthData.buyers[b.id]);
+      const c = calcBuyer(monthData.buyers[b.id] || {days:{}});
       farmLitres += c.total;
       if (footerCells[i + 1]) footerCells[i + 1].textContent = fmtNum(c.total);
     });
     $('entryTotals').innerHTML =
       `<span>Total milk: <b>${fmtNum(farmLitres)} L</b></span>` +
-      `<span class="mk-tip">Rate & balance → Buyers tab</span>`;
+      `<span class="mk-tip">${monthIsClosed(ym) ? '🔒 Archived — read-only' : 'Rate & balance → Buyers tab'}</span>`;
   }
 
   function bindEntry() {
     const grid = $('entryGridHost');
+
+    $('entryMonthStatus').addEventListener('click', (event) => {
+      const button = event.target.closest('[data-close-month-action]');
+      if (!button) return;
+      const ym = getSelectedYM();
+      if (button.dataset.closeMonthAction === 'close') {
+        if (ym >= currentYM() || !monthHasRecordedDays(ym) || monthIsClosed(ym)) {
+          showToast('Only completed months with milk entries can be archived');
+          return;
+        }
+        if (!window.confirm(`Close ${monthLabel(ym)} and make it read-only?\n\nAll milk quantities, rates and bills remain saved, including in your full JSON backups. This does not mean customers have paid. You can reopen for corrections.`)) return;
+        if (!DB.closedMonths) DB.closedMonths = {};
+        DB.closedMonths[ym] = {closedAt: new Date().toISOString()};
+        try { saveData(DB); }
+        catch (err) { delete DB.closedMonths[ym]; showToast('Unable to save the closed month'); return; }
+      } else if (button.dataset.closeMonthAction === 'reopen') {
+        if (!monthIsClosed(ym)) return;
+        if (!window.confirm(`Reopen ${monthLabel(ym)} for corrections?\n\nAny later months' saved opening balances will NOT be recalculated automatically. Review those balances if you change old records.`)) return;
+        const previous = DB.closedMonths[ym];
+        delete DB.closedMonths[ym];
+        try { saveData(DB); }
+        catch (err) { DB.closedMonths[ym] = previous; showToast('Unable to reopen the month'); return; }
+      } else {
+        return;
+      }
+      renderEntry();
+      renderBuyers();
+      if (window.WhiteAccountsAnalysis) window.WhiteAccountsAnalysis.render();
+      showToast(monthIsClosed(ym) ? 'Month archived and locked ✅' : 'Month reopened for corrections');
+    });
 
     function updateMultiSelectionUI() {
       const buyer = buyersForMonth(getSelectedYM()).find((b) => b.id === selectedEntryBuyerId);
@@ -825,6 +861,7 @@
     grid.addEventListener('click', (e) => {
       const input = e.target.closest('.mk-entry-table input[data-buyer]');
       if (input && e.altKey) {
+        if (monthIsClosed(getSelectedYM())) { showToast('Archived month is read-only'); return; }
         e.preventDefault();
         const buyerId = input.dataset.buyer;
         const day = Number(input.dataset.day);
@@ -850,6 +887,7 @@
         return;
       }
       if (!e.target.closest('#multiMilkApplyBtn')) return;
+      if (monthIsClosed(getSelectedYM())) { showToast('Archived month is read-only'); return; }
       const rawQty = $('multiMilkQty').value.trim();
       const qty = Number(rawQty);
       if (!selectedEntryBuyerId || !selectedEntryDays.size) return;
@@ -876,6 +914,7 @@
 
     $('entryGridHost').addEventListener('click', (e) => {
       if (!e.target.closest('#bulkMilkFillBtn')) return;
+      if (monthIsClosed(getSelectedYM())) { showToast('Archived month is read-only'); return; }
       const buyerId = $('bulkMilkBuyer').value;
       const rawQty = $('bulkMilkQty').value.trim();
       const qty = Number(rawQty);
@@ -942,6 +981,7 @@
     $('entryGridHost').addEventListener('input', (e) => {
       const input = e.target;
       if (!input.matches('input[data-buyer]')) return;
+      if (monthIsClosed(getSelectedYM())) { renderEntry(); showToast('Archived month is read-only'); return; }
       const ym = getSelectedYM();
       ensureMonth(ym);
       const buyerId = input.dataset.buyer;
@@ -965,6 +1005,7 @@
     $('entryGridHost').addEventListener('keydown', (e) => {
       const input = e.target;
       if (!input.matches('input[data-buyer]')) return;
+      if (monthIsClosed(getSelectedYM())) { e.preventDefault(); return; }
 
       if (e.key === 'Backspace' || e.key === 'Delete') {
         e.preventDefault();
