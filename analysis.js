@@ -74,6 +74,115 @@
     });
     return a;
   }
+  // Build a portable archive from the imported history and all manually closed
+  // Entry months. No live/open month is exported as historical.
+  function historicalArchiveForExport(db) {
+    var existing = db.archive || {};
+    var archive = {
+      schemaVersion: 1,
+      customers: JSON.parse(JSON.stringify(existing.customers || [])),
+      months: JSON.parse(JSON.stringify(existing.months || {}))
+    };
+    var ids = new Set(archive.customers.map(function (c) { return c.id; }));
+    var byName = Object.create(null);
+    archive.customers.forEach(function (c) {
+      [c.name].concat(c.aliases || []).forEach(function (n) { byName[norm(n)] = c.id; });
+    });
+    var buyers = Object.create(null);
+    (db.buyers || []).forEach(function (b) { buyers[b.id] = b; });
+
+    Object.keys(db.closedMonths || {}).sort().forEach(function (ym) {
+      if (!db.closedMonths[ym] || !validYM(ym) || !db.months || !db.months[ym]) return;
+      var month = archive.months[ym] || {buyers:{}};
+      if (!month.buyers) month.buyers = {};
+      Object.keys(db.months[ym].buyers || {}).forEach(function (bid) {
+        var buyer = buyers[bid], entry = db.months[ym].buyers[bid];
+        if (!buyer || !entry || !entry.days || !Object.keys(entry.days).length) return;
+        var id = byName[norm(buyer.name)];
+        if (!id) {
+          id = 'closed-' + bid;
+          while (ids.has(id)) id += '-copy';
+          ids.add(id);
+          byName[norm(buyer.name)] = id;
+          archive.customers.push({id:id, name:buyer.name, aliases:[]});
+        }
+        // Imported historical archive wins if this customer-month already exists.
+        if (month.buyers[id]) return;
+        var days = Object.assign({}, entry.days);
+        var qty = sumDays(days);
+        var rate = knownAmount(entry.rate) ? Number(entry.rate) : null;
+        month.buyers[id] = {
+          days: days,
+          litres: qty,
+          rate: rate,
+          salesAmount: rate === null ? null : Math.round(qty * rate * 100) / 100,
+          source: 'closed-month'
+        };
+      });
+      if (Object.keys(month.buyers).length) archive.months[ym] = month;
+    });
+    return archive;
+  }
+  function downloadFile(content, name, type) {
+    var url = URL.createObjectURL(new Blob([content], {type:type}));
+    var link = document.createElement('a');
+    link.href = url;
+    link.download = name;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+  }
+  function csvField(value) {
+    var s = String(value == null ? '' : value);
+    // Prevent spreadsheet formula execution in customer names.
+    if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+    return '"' + s.replace(/"/g, '""') + '"';
+  }
+  function exportHistoricalJSON() {
+    var archive = historicalArchiveForExport(getDB());
+    if (!Object.keys(archive.months).length) {
+      toast('No archived months to export');
+      return;
+    }
+    // Same format as Settings -> Import historical archive.
+    downloadFile(JSON.stringify({
+      format:'white-accounts-historical-archive',
+      version:1,
+      archive:archive
+    }, null, 2), 'white-accounts-historical-archive.json', 'application/json');
+    toast('Historical archive JSON downloaded ✅');
+  }
+  function exportHistoricalCSV() {
+    var archive = historicalArchiveForExport(getDB());
+    if (!Object.keys(archive.months).length) {
+      toast('No archived months to export');
+      return;
+    }
+    var names = Object.create(null);
+    archive.customers.forEach(function (c) { names[c.id] = c.name; });
+    var headings = ['Milk month','Usual collection month','Customer','Litres','Rate (INR/L)','Billed amount (INR)','Source'];
+    for (var d = 1; d <= 31; d++) headings.push('Day ' + d);
+    var rows = [headings.map(csvField).join(',')];
+    Object.keys(archive.months).sort().forEach(function (ym) {
+      Object.keys(archive.months[ym].buyers || {}).sort(function (a,b) {
+        return String(names[a] || '').localeCompare(String(names[b] || ''), 'hi');
+      }).forEach(function (id) {
+        var rec = archive.months[ym].buyers[id], cols = [
+          ym, followingMonth(ym), names[id] || id, rec.litres,
+          rec.rate, rec.salesAmount, rec.source || 'historical-import'
+        ];
+        for (var day=1; day<=31; day++) {
+          cols.push(Object.prototype.hasOwnProperty.call(rec.days || {}, String(day))
+            ? rec.days[String(day)] : '');
+        }
+        rows.push(cols.map(csvField).join(','));
+      });
+    });
+    downloadFile('\uFEFF' + rows.join('\r\n'), 'white-accounts-historical-archive.csv', 'text/csv;charset=utf-8');
+    toast('Historical CSV downloaded ✅');
+  }
+
   function collect(db) {
     var groups = Object.create(null);
     var lookup = Object.create(null);
@@ -114,7 +223,7 @@
         var key = lookup[norm(buyer.name)] || 'l:' + norm(buyer.name);
         // The archive is authoritative in archived months; avoid double-counting duplicates.
         if (slot[key] && slot[key].source === 'archive') return;
-        if (!slot[key]) slot[key] = {days:{},source:'live',billed:0};
+        if (!slot[key]) slot[key] = {days:{},source:(db.closedMonths && db.closedMonths[ym]) ? 'archive' : 'live',billed:0};
         var liveRecord = db.months[ym].buyers[id];
         mergeDays(slot[key].days, liveRecord.days || {});
         // Sum each live buyer entry separately so different monthly rates are respected.
@@ -178,7 +287,9 @@
     var positiveDays = rows.reduce(function (s,r) {
       return s + Object.keys(r.days).filter(function (day) { return r.days[day] > 0; }).length;
     }, 0);
-    var archiveCount = Object.keys((db.archive || {}).months || {}).length;
+    var archiveCount = new Set(Object.keys((db.archive || {}).months || {}).concat(
+      Object.keys(db.closedMonths || {}).filter(function (ym) { return !!db.closedMonths[ym] && !!(db.months || {})[ym]; })
+    )).size;
     var text = '<div class="mk-analysis-kpis">' +
       '<div><small>Total milk purchased</small><strong>' + litres(total) + ' L</strong></div>' +
       '<div><small>Total billed (not paid)</small><strong>' + (amountsComplete ? rupees(totalBilled) : '—') + '</strong></div>' +
@@ -219,6 +330,8 @@
       $(id).addEventListener('change', render);
     });
     $('archiveImportBtn').addEventListener('click', function () { $('archiveImportFile').click(); });
+    $('archiveExportBtn').addEventListener('click', exportHistoricalJSON);
+    $('archiveCsvBtn').addEventListener('click', exportHistoricalCSV);
     $('archiveImportFile').addEventListener('change', function (event) {
       var input = event.target, file = input.files && input.files[0];
       if (!file) return;
