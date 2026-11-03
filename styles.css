@@ -573,3 +573,59 @@ body{
 }
 .mk-multi-status { color: var(--ink-soft); font-size: 13px; margin: 0 0 8px; }
 .mk-multi-entry .mk-actions { flex-wrap: wrap; }
+
+/* Compact entry tools: one working row and an optional monthly-fill drawer */
+.mk-entry-tools {
+  border: 1px solid var(--paper-margin);
+  border-radius: 8px;
+  background: var(--white);
+  margin-bottom: 8px;
+  padding: 10px 12px;
+}
+.mk-entry-tools-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+}
+.mk-entry-tools-label { font-size: 13px; font-weight: 700; color: var(--red-deep); }
+.mk-entry-tools .mk-multi-status {
+  margin: 0;
+  flex: 1 1 125px;
+  min-width: 95px;
+}
+.mk-entry-inline-qty {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 12.5px; font-weight: 600; color: var(--ink-soft);
+}
+.mk-entry-inline-qty input {
+  width: 95px; padding: 7px 8px; font: inherit;
+  border: 1px solid var(--paper-margin); border-radius: 5px;
+  background: #fff;
+}
+.mk-month-fill-details { border-top: 1px solid var(--paper-margin); margin-top: 10px; padding-top: 8px; }
+.mk-month-fill-details summary {
+  cursor: pointer; width: fit-content;
+  color: var(--red-deep); font-size: 12.5px; font-weight: 600;
+}
+.mk-month-fill-content { display: flex; align-items: end; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+.mk-month-fill-content > label:not(.mk-month-fill-check) {
+  display: grid; gap: 5px; min-width: 150px; flex: 1 1 180px;
+  font-size: 12px; font-weight: 600; color: var(--ink-soft);
+}
+.mk-month-fill-content select, .mk-month-fill-content input[type="number"] {
+  width: 100%; min-height: 34px; border: 1px solid var(--paper-margin);
+  border-radius: 5px; padding: 5px 8px; font: inherit; background: #fff;
+}
+.mk-month-fill-check {
+  display: inline-flex; gap: 6px; align-items: center;
+  font-size: 12.5px; color: var(--ink-soft);
+  padding-bottom: 8px;
+}
+.mk-month-fill-details .mk-tip { margin: 8px 0 0; }
+.mk-entry-shortcuts { margin: 0 0 8px; font-size: 12px; }
+@media(max-width:640px) {
+  .mk-entry-tools-row { align-items: center; }
+  .mk-entry-inline-qty { flex: 1 1 130px; }
+  .mk-entry-inline-qty input { width: 100%; min-width: 60px; }
+}
