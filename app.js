@@ -797,6 +797,7 @@
     $('entryTotals').innerHTML =
       `<span>Total milk: <b>${fmtNum(farmLitres)} L</b></span>` +
       `<span class="mk-tip">${monthIsClosed(ym) ? '🔒 Archived — read-only' : 'Rate & balance → Buyers tab'}</span>`;
+    renderMonthClosing();
   }
 
   function bindEntry() {
