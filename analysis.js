@@ -135,8 +135,10 @@
       return;
     }
     var rows = [];
+    var now = new Date();
+    var todayMonth = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
     Object.keys(data.months).sort().forEach(function (ym) {
-      if ((from && ym < from) || (to && ym > to)) return;
+      if ((!custom && ym > todayMonth) || (from && ym < from) || (to && ym > to)) return;
       var cells = data.months[ym], days = {}, source = '';
       if (selected) {
         if (!cells[selected]) return;
