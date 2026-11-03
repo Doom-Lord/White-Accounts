@@ -11,6 +11,8 @@
   }
   function norm(s) { return String(s || '').trim().replace(/\s+/g, ' ').toLowerCase(); }
   function litres(n) { return (Math.round((Number(n) || 0) * 100) / 100).toLocaleString('en-IN', {maximumFractionDigits: 2}); }
+  function rupees(n) { return '₹' + (Math.round(Number(n) * 100) / 100).toLocaleString('en-IN', {maximumFractionDigits: 2}); }
+  function knownAmount(value) { return value !== null && value !== undefined && value !== '' && Number.isFinite(Number(value)) && Number(value) >= 0; }
   function label(ym) {
     var parts = ym.split('-');
     var names = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -92,7 +94,13 @@
         var record = archive.months[ym].buyers[id];
         var key = 'h:' + id;
         if (!groups[key]) return;
-        slot[key] = {days:Object.assign({}, record.days || {}), source:'archive'};
+        // Use the historical billed sales amount, not NET or a payment/balance figure.
+        // A customer may have different milk types and rates in the same month.
+        slot[key] = {
+          days:Object.assign({}, record.days || {}),
+          source:'archive',
+          billed: knownAmount(record.salesAmount) ? Number(record.salesAmount) : null
+        };
       });
     });
     var buyersById = Object.create(null);
@@ -106,8 +114,14 @@
         var key = lookup[norm(buyer.name)] || 'l:' + norm(buyer.name);
         // The archive is authoritative in archived months; avoid double-counting duplicates.
         if (slot[key] && slot[key].source === 'archive') return;
-        if (!slot[key]) slot[key] = {days:{},source:'live'};
-        mergeDays(slot[key].days, db.months[ym].buyers[id].days || {});
+        if (!slot[key]) slot[key] = {days:{},source:'live',billed:0};
+        var liveRecord = db.months[ym].buyers[id];
+        mergeDays(slot[key].days, liveRecord.days || {});
+        // Sum each live buyer entry separately so different monthly rates are respected.
+        if (slot[key].billed !== null) {
+          if (knownAmount(liveRecord.rate)) slot[key].billed += sumDays(liveRecord.days) * Number(liveRecord.rate);
+          else slot[key].billed = null;
+        }
       });
     });
     return {groups:groups, months:months};
@@ -139,21 +153,27 @@
     var todayMonth = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
     Object.keys(data.months).sort().forEach(function (ym) {
       if ((!custom && ym > todayMonth) || (from && ym < from) || (to && ym > to)) return;
-      var cells = data.months[ym], days = {}, source = '';
+      var cells = data.months[ym], days = {}, source = '', billed = 0, missingBill = false;
       if (selected) {
         if (!cells[selected]) return;
         mergeDays(days, cells[selected].days);
         source = cells[selected].source;
+        if (cells[selected].billed === null) missingBill = true;
+        else billed = cells[selected].billed;
       } else {
         Object.keys(cells).forEach(function (k) {
           mergeDays(days, cells[k].days);
+          if (cells[k].billed === null) missingBill = true;
+          else billed += cells[k].billed;
           if (cells[k].source === 'archive') source = source === 'live' ? 'mixed' : 'archive';
           else source = source === 'archive' ? 'mixed' : 'live';
         });
       }
-      rows.push({ym:ym, days:days, qty:sumDays(days), source:source});
+      rows.push({ym:ym, days:days, qty:sumDays(days), billed:missingBill ? null : billed, source:source});
     });
     var total = rows.reduce(function (s, r) { return s + r.qty; }, 0);
+    var amountsComplete = rows.every(function (r) { return r.billed !== null; });
+    var totalBilled = rows.reduce(function (s, r) { return s + (r.billed || 0); }, 0);
     var active = rows.filter(function (r) { return r.qty > 0; });
     var positiveDays = rows.reduce(function (s,r) {
       return s + Object.keys(r.days).filter(function (day) { return r.days[day] > 0; }).length;
@@ -161,11 +181,13 @@
     var archiveCount = Object.keys((db.archive || {}).months || {}).length;
     var text = '<div class="mk-analysis-kpis">' +
       '<div><small>Total milk purchased</small><strong>' + litres(total) + ' L</strong></div>' +
+      '<div><small>Total billed (not paid)</small><strong>' + (amountsComplete ? rupees(totalBilled) : '—') + '</strong></div>' +
       '<div><small>Months with purchases</small><strong>' + active.length + '</strong></div>' +
       '<div><small>Days with milk</small><strong>' + positiveDays + '</strong></div>' +
       '<div><small>Average per purchase month</small><strong>' + litres(active.length ? total / active.length : 0) + ' L</strong></div>' +
       '</div>';
-    text += '<p class="mk-tip">Milk is counted in its delivery month. Payment is usually collected in the following month; this report does not verify payments.</p>';
+    text += '<p class="mk-tip">Billed amount is the value of milk sold in the delivery month, not money received. Historical figures use the original spreadsheet sales amounts; current entries use litres × that month’s rate. Payment is usually collected the following month.</p>';
+    if (!amountsComplete) text += '<p class="mk-warn-box">Some months are missing billed amounts or monthly rates. Their billed amounts are shown as unavailable rather than guessed.</p>';
     text += '<p class="mk-tip">Historical archive: ' + archiveCount + ' month(s). Live Entry records are included without duplicating a matching archived customer/month.</p>';
     if (!rows.length) {
       out.innerHTML = text + '<div class="mk-placeholder">No milk records found for this selection. Import an archive in Settings or enter milk in Entry.</div>';
@@ -173,12 +195,13 @@
     }
     var max = Math.max.apply(null, rows.map(function (r) { return r.qty; }).concat([1]));
     text += '<div class="mk-grid-scroll mk-analysis-scroll"><table class="mk-ledger-table mk-analysis-table"><thead>' +
-      '<tr><th>Milk month</th><th>Litres</th><th>Volume</th><th>Expected collection</th><th>Source</th><th>Daily records</th></tr></thead><tbody>';
+      '<tr><th>Milk month</th><th>Litres</th><th>Billed (₹)</th><th>Volume</th><th>Usual collection month</th><th>Source</th><th>Daily records</th></tr></thead><tbody>';
     rows.forEach(function (r) {
       var dayCells = Object.keys(r.days).sort(function (a,b) { return Number(a) - Number(b); })
         .map(function (day) { return '<span>' + day + ': <b>' + litres(r.days[day]) + ' L</b></span>'; }).join('');
       text += '<tr><td>' + label(r.ym) + '</td>' +
         '<td><b>' + litres(r.qty) + '</b></td>' +
+        '<td><b>' + (r.billed === null ? '—' : rupees(r.billed)) + '</b></td>' +
         '<td><div class="mk-analysis-bar" style="width:' + Math.round(100 * r.qty / max) + '%"></div></td>' +
         '<td>' + label(followingMonth(r.ym)) + '</td>' +
         '<td>' + (r.source === 'archive' ? 'Archive' : r.source === 'mixed' ? 'Archive + live' : 'Live') + '</td>' +
