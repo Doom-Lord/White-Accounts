@@ -560,3 +560,16 @@ body{
 
 @page.mk-page-receipt{ size: auto; margin: 12mm; }
 @page.mk-page-ledger{ size: landscape; margin: 8mm; }
+
+/* Option-click multi-cell selection in the Entry grid */
+.mk-entry-table td.mk-cell-selected,
+.mk-entry-table tr.mk-today td.mk-cell-selected {
+  background: rgba(35, 115, 180, 0.23);
+  box-shadow: inset 0 0 0 2px #2373b4;
+}
+.mk-entry-table td.mk-cell-selected input[type="number"] {
+  background: transparent;
+  font-weight: 700;
+}
+.mk-multi-status { color: var(--ink-soft); font-size: 13px; margin: 0 0 8px; }
+.mk-multi-entry .mk-actions { flex-wrap: wrap; }

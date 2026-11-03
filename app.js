@@ -625,7 +625,13 @@
   }
 
   // ───────────────────────── Entry grid ─────────────────────────
+  // Selection is temporary UI state; only Apply changes stored milk entries.
+  let selectedEntryBuyerId = null;
+  const selectedEntryDays = new Set();
+
   function renderEntry() {
+    selectedEntryBuyerId = null;
+    selectedEntryDays.clear();
     const ym = getSelectedYM();
     const { year, month } = parseYearMonth(ym);
     const numDays = daysInMonth(year, month);
@@ -681,6 +687,25 @@
           <button type="button" class="mk-btn mk-btn--primary" id="bulkMilkFillBtn">Fill selected month</button>
         </div>
         <p class="mk-tip">Without the checkbox, only blank dates are filled. You can edit any day's milk afterward. Changes save in this browser.</p>
+      </div>`;
+    // Option-click individual dates in a single buyer column, then apply once.
+    html += `
+      <div class="mk-form mk-multi-entry" id="multiMilkTools" style="margin-bottom:12px;">
+        <p class="mk-tip" style="margin:0 0 8px;">
+          ⌥ <b>Option-click</b> dates in one buyer's column to select them.
+          Option-click again to deselect. Regular clicks still edit one date.
+        </p>
+        <div id="multiMilkStatus" class="mk-multi-status" role="status" aria-live="polite">No dates selected</div>
+        <div class="mk-field-row" style="align-items:end;">
+          <div class="mk-field">
+            <label for="multiMilkQty">Milk for selected dates (L)</label>
+            <input id="multiMilkQty" type="number" step="0.5" min="0" inputmode="decimal" placeholder="e.g. 1.5">
+          </div>
+          <div class="mk-actions">
+            <button type="button" id="multiMilkApplyBtn" class="mk-btn mk-btn--primary" disabled>Apply to selected dates</button>
+            <button type="button" id="multiMilkClearBtn" class="mk-btn mk-btn--ghost" disabled>Clear selection</button>
+          </div>
+        </div>
       </div>`;
     // Grid
     html += '<p class="mk-entry-tip">💡 <b>Enter</b> = next day same buyer · <b>Tab</b> = next buyer · <b>Backspace</b> = clear cell</p>';
@@ -739,6 +764,86 @@
   }
 
   function bindEntry() {
+    const grid = $('entryGridHost');
+
+    function updateMultiSelectionUI() {
+      const buyer = buyersForMonth(getSelectedYM()).find((b) => b.id === selectedEntryBuyerId);
+      const status = $('multiMilkStatus');
+      if (status) {
+        status.textContent = buyer && selectedEntryDays.size
+          ? `${selectedEntryDays.size} date(s) selected for ${buyer.name}: ${Array.from(selectedEntryDays).sort((a, b) => a - b).join(', ')}`
+          : 'No dates selected';
+      }
+      const apply = $('multiMilkApplyBtn');
+      const clear = $('multiMilkClearBtn');
+      if (apply) apply.disabled = selectedEntryDays.size === 0;
+      if (clear) clear.disabled = selectedEntryDays.size === 0;
+    }
+
+    function clearMultiSelection() {
+      selectedEntryBuyerId = null;
+      selectedEntryDays.clear();
+      grid.querySelectorAll('.mk-cell-selected').forEach((cell) => cell.classList.remove('mk-cell-selected'));
+      updateMultiSelectionUI();
+    }
+
+    // Prevent Option-click from moving the text cursor into an editable quantity.
+    grid.addEventListener('mousedown', (e) => {
+      if (e.altKey && e.target.closest('.mk-entry-table input[data-buyer]')) e.preventDefault();
+    });
+
+    grid.addEventListener('click', (e) => {
+      const input = e.target.closest('.mk-entry-table input[data-buyer]');
+      if (input && e.altKey) {
+        e.preventDefault();
+        const buyerId = input.dataset.buyer;
+        const day = Number(input.dataset.day);
+        if (selectedEntryBuyerId && selectedEntryBuyerId !== buyerId) {
+          showToast('Select dates for one buyer at a time. Clear selection to switch buyers.');
+          return;
+        }
+        selectedEntryBuyerId = buyerId;
+        if (selectedEntryDays.has(day)) {
+          selectedEntryDays.delete(day);
+          input.closest('td').classList.remove('mk-cell-selected');
+          if (!selectedEntryDays.size) selectedEntryBuyerId = null;
+        } else {
+          selectedEntryDays.add(day);
+          input.closest('td').classList.add('mk-cell-selected');
+        }
+        updateMultiSelectionUI();
+        return;
+      }
+
+      if (e.target.closest('#multiMilkClearBtn')) {
+        clearMultiSelection();
+        return;
+      }
+      if (!e.target.closest('#multiMilkApplyBtn')) return;
+      const rawQty = $('multiMilkQty').value.trim();
+      const qty = Number(rawQty);
+      if (!selectedEntryBuyerId || !selectedEntryDays.size) return;
+      if (rawQty === '' || !Number.isFinite(qty) || qty < 0) {
+        showToast('Enter a valid milk quantity (0 or more)');
+        return;
+      }
+      const ym = getSelectedYM();
+      const buyer = buyersForMonth(ym).find((b) => b.id === selectedEntryBuyerId);
+      if (!buyer) { clearMultiSelection(); return; }
+      const entry = ensureMonth(ym).buyers[selectedEntryBuyerId];
+      const count = selectedEntryDays.size;
+      selectedEntryDays.forEach((day) => {
+        entry.days[String(day)] = qty;
+        const cell = Array.from(grid.querySelectorAll('.mk-entry-table input[data-buyer]'))
+          .find((el) => el.dataset.buyer === selectedEntryBuyerId && Number(el.dataset.day) === day);
+        if (cell) cell.value = fmtNum(qty);
+      });
+      saveData(DB);
+      refreshEntryFooter();
+      clearMultiSelection();
+      showToast(`Saved ${fmtNum(qty)} L for ${count} date(s) — ${buyer.name} ✅`);
+    });
+
     $('entryGridHost').addEventListener('click', (e) => {
       if (!e.target.closest('#bulkMilkFillBtn')) return;
       const buyerId = $('bulkMilkBuyer').value;
