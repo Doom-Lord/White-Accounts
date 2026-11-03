@@ -662,53 +662,42 @@
       return;
     }
 
-    // Bulk fill: write daily milk for one buyer across the selected month.
-    // By default, preserve every date that already has a value (including 0).
+    // Compact tools: everyday multi-date entry stays visible; occasional monthly fill is collapsible.
     const buyerOptions = buyers.map((b) =>
       `<option value="${escapeHtml(b.id)}">${escapeHtml(b.name)}</option>`
     ).join('');
     let html = `
-      <div class="mk-form" style="margin-bottom:16px;">
-        <div class="mk-field-row" style="align-items:end;">
-          <div class="mk-field">
-            <label for="bulkMilkBuyer">Buyer to fill</label>
-            <select id="bulkMilkBuyer">${buyerOptions}</select>
-          </div>
-          <div class="mk-field">
-            <label for="bulkMilkQty">Usual daily milk (L)</label>
-            <input id="bulkMilkQty" type="number" min="0" step="0.5" inputmode="decimal" placeholder="e.g. 2">
-          </div>
-        </div>
-        <label style="display:flex;align-items:center;gap:8px;margin:10px 0;">
-          <input id="bulkMilkReplace" type="checkbox">
-          Replace existing dates too (including zero and manually changed entries)
-        </label>
-        <div class="mk-actions">
-          <button type="button" class="mk-btn mk-btn--primary" id="bulkMilkFillBtn">Fill selected month</button>
-        </div>
-        <p class="mk-tip">Without the checkbox, only blank dates are filled. You can edit any day's milk afterward. Changes save in this browser.</p>
-      </div>`;
-    // Option-click individual dates in a single buyer column, then apply once.
-    html += `
-      <div class="mk-form mk-multi-entry" id="multiMilkTools" style="margin-bottom:12px;">
-        <p class="mk-tip" style="margin:0 0 8px;">
-          ⌥ <b>Option-click</b> dates in one buyer's column to select them.
-          Option-click again to deselect. Regular clicks still edit one date.
-        </p>
-        <div id="multiMilkStatus" class="mk-multi-status" role="status" aria-live="polite">No dates selected</div>
-        <div class="mk-field-row" style="align-items:end;">
-          <div class="mk-field">
-            <label for="multiMilkQty">Milk for selected dates (L)</label>
+      <div class="mk-entry-tools">
+        <div class="mk-entry-tools-row">
+          <span class="mk-entry-tools-label">⌥ Option-click dates</span>
+          <span id="multiMilkStatus" class="mk-multi-status" role="status" aria-live="polite">No dates selected</span>
+          <label class="mk-entry-inline-qty" for="multiMilkQty">
+            <span>Milk (L)</span>
             <input id="multiMilkQty" type="number" step="0.5" min="0" inputmode="decimal" placeholder="e.g. 1.5">
-          </div>
-          <div class="mk-actions">
-            <button type="button" id="multiMilkApplyBtn" class="mk-btn mk-btn--primary" disabled>Apply to selected dates</button>
-            <button type="button" id="multiMilkClearBtn" class="mk-btn mk-btn--ghost" disabled>Clear selection</button>
-          </div>
+          </label>
+          <button type="button" id="multiMilkApplyBtn" class="mk-btn mk-btn--primary mk-btn--sm" disabled>Apply to selected</button>
+          <button type="button" id="multiMilkClearBtn" class="mk-btn mk-btn--ghost mk-btn--sm" disabled>Clear</button>
         </div>
-      </div>`;
+        <details class="mk-month-fill-details">
+          <summary>Fill an entire month for a buyer</summary>
+          <div class="mk-month-fill-content">
+            <label for="bulkMilkBuyer">Buyer
+              <select id="bulkMilkBuyer">${buyerOptions}</select>
+            </label>
+            <label for="bulkMilkQty">Usual daily milk (L)
+              <input id="bulkMilkQty" type="number" min="0" step="0.5" inputmode="decimal" placeholder="e.g. 2">
+            </label>
+            <label class="mk-month-fill-check">
+              <input id="bulkMilkReplace" type="checkbox">
+              Overwrite existing dates
+            </label>
+            <button type="button" class="mk-btn mk-btn--primary mk-btn--sm" id="bulkMilkFillBtn">Fill month</button>
+          </div>
+          <p class="mk-tip">By default, only blank dates are filled. Existing values (including zero) are preserved.</p>
+        </details>
+      </div>
+      <p class="mk-entry-tip mk-entry-shortcuts">Enter = next day · Tab = next buyer · Backspace = clear cell</p>`;
     // Grid
-    html += '<p class="mk-entry-tip">💡 <b>Enter</b> = next day same buyer · <b>Tab</b> = next buyer · <b>Backspace</b> = clear cell</p>';
     html += '<div class="mk-grid-scroll"><table class="mk-entry-table"><thead><tr><th>Date</th>';
     buyers.forEach((b) => {
       html += `<th class="mk-col-buyer">${escapeHtml(b.name)}</th>`;
