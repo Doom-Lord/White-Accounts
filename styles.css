@@ -669,3 +669,32 @@ body{
   .mk-analysis-controls > .mk-field, .mk-analysis-range { flex: 1 1 100%; }
   .mk-analysis-kpis strong { font-size: 18px; }
 }
+
+/* Monthly close/archives: visible status near the Entry grid */
+.mk-month-closing {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  padding: 9px 12px;
+  margin: 0 0 10px;
+  border: 1px solid var(--paper-margin);
+  border-radius: 8px;
+  background: var(--white);
+  color: var(--ink-soft);
+  font-size: 12.5px;
+}
+.mk-month-closing--closed {
+  border-color: #b9a376;
+  background: #fff7e3;
+  color: var(--ink);
+}
+.mk-month-closing .mk-btn { flex-shrink: 0; }
+.mk-month-closing button:disabled { opacity: .5; cursor: not-allowed; }
+.mk-entry-table input:disabled {
+  background: rgba(150, 144, 125, .08);
+  color: var(--ink);
+  opacity: 1;
+  cursor: default;
+}
