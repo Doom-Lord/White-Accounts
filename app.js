@@ -656,8 +656,34 @@
       return;
     }
 
+    // Bulk fill: write daily milk for one buyer across the selected month.
+    // By default, preserve every date that already has a value (including 0).
+    const buyerOptions = buyers.map((b) =>
+      `<option value="${escapeHtml(b.id)}">${escapeHtml(b.name)}</option>`
+    ).join('');
+    let html = `
+      <div class="mk-form" style="margin-bottom:16px;">
+        <div class="mk-field-row" style="align-items:end;">
+          <div class="mk-field">
+            <label for="bulkMilkBuyer">Buyer to fill</label>
+            <select id="bulkMilkBuyer">${buyerOptions}</select>
+          </div>
+          <div class="mk-field">
+            <label for="bulkMilkQty">Usual daily milk (L)</label>
+            <input id="bulkMilkQty" type="number" min="0" step="0.5" inputmode="decimal" placeholder="e.g. 2">
+          </div>
+        </div>
+        <label style="display:flex;align-items:center;gap:8px;margin:10px 0;">
+          <input id="bulkMilkReplace" type="checkbox">
+          Replace existing dates too (including zero and manually changed entries)
+        </label>
+        <div class="mk-actions">
+          <button type="button" class="mk-btn mk-btn--primary" id="bulkMilkFillBtn">Fill selected month</button>
+        </div>
+        <p class="mk-tip">Without the checkbox, only blank dates are filled. You can edit any day's milk afterward. Changes save in this browser.</p>
+      </div>`;
     // Grid
-    let html = '<p class="mk-entry-tip">💡 <b>Enter</b> = next day same buyer · <b>Tab</b> = next buyer · <b>Backspace</b> = clear cell</p>';
+    html += '<p class="mk-entry-tip">💡 <b>Enter</b> = next day same buyer · <b>Tab</b> = next buyer · <b>Backspace</b> = clear cell</p>';
     html += '<div class="mk-grid-scroll"><table class="mk-entry-table"><thead><tr><th>Date</th>';
     buyers.forEach((b) => {
       html += `<th class="mk-col-buyer">${escapeHtml(b.name)}</th>`;
@@ -713,6 +739,40 @@
   }
 
   function bindEntry() {
+    $('entryGridHost').addEventListener('click', (e) => {
+      if (!e.target.closest('#bulkMilkFillBtn')) return;
+      const buyerId = $('bulkMilkBuyer').value;
+      const rawQty = $('bulkMilkQty').value.trim();
+      const qty = Number(rawQty);
+      if (!buyerId || rawQty === '' || !Number.isFinite(qty) || qty < 0) {
+        showToast('Enter a valid daily milk quantity (0 or more)');
+        return;
+      }
+      const ym = getSelectedYM();
+      const buyer = buyersForMonth(ym).find((b) => b.id === buyerId);
+      if (!buyer) return;
+      const replace = $('bulkMilkReplace').checked;
+      if (replace && !window.confirm(
+        `Replace ALL daily milk entries for ${buyer.name} in ${monthLabel(ym)} with ${fmtNum(qty)} L? This overwrites existing values.`
+      )) return;
+
+      const { year, month } = parseYearMonth(ym);
+      const numDays = daysInMonth(year, month);
+      const entry = ensureMonth(ym).buyers[buyerId];
+      let changed = 0;
+      for (let day = 1; day <= numDays; day++) {
+        const key = String(day);
+        const existing = entry.days[key];
+        if (replace || existing === undefined || existing === null || existing === '') {
+          entry.days[key] = qty;
+          changed++;
+        }
+      }
+      if (changed) saveData(DB);
+      renderEntry();
+      showToast(changed ? `Filled ${changed} days for ${buyer.name} ✅` : 'No blank dates to fill');
+    });
+
     $('jumpTodayBtn').addEventListener('click', () => {
       // Keep working month (defaults to previous month); jump to today if that
       // month is current, otherwise to the last day of the selected month.
