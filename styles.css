@@ -629,3 +629,43 @@ body{
   .mk-entry-inline-qty { flex: 1 1 130px; }
   .mk-entry-inline-qty input { width: 100%; min-width: 60px; }
 }
+
+/* Read-only history and customer milk analysis */
+.mk-analysis-controls {
+  display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px;
+  border: 1px solid var(--paper-margin); border-radius: 8px;
+  padding: 12px; margin-bottom: 14px; background: var(--white);
+}
+.mk-analysis-controls > .mk-field { flex: 1 1 190px; min-width: 150px; }
+.mk-analysis-controls select, .mk-analysis-controls input {
+  width: 100%; min-height: 37px; border: 1px solid var(--paper-margin);
+  border-radius: 6px; padding: 6px 8px; background: #fff; color: var(--ink);
+  font: inherit;
+}
+.mk-analysis-range { display: flex; gap: 10px; flex: 1 1 280px; }
+.mk-analysis-range[hidden] { display: none !important; }
+.mk-analysis-range .mk-field { flex: 1 1 120px; min-width: 120px; }
+.mk-analysis-kpis {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(155px, 1fr));
+  gap: 10px; margin-bottom: 12px;
+}
+.mk-analysis-kpis > div {
+  padding: 12px 14px; border-radius: 8px; background: var(--white);
+  border: 1px solid var(--paper-margin);
+}
+.mk-analysis-kpis small { display: block; font-size: 12px; color: var(--ink-soft); }
+.mk-analysis-kpis strong { display: block; font-size: 21px; color: var(--red-deep); margin-top: 4px; }
+.mk-analysis-scroll { max-height: min(62vh, 650px); }
+.mk-analysis-table td { min-width: 90px; padding: 9px 12px; }
+.mk-analysis-table td:nth-child(3) { min-width: 150px; }
+.mk-analysis-bar { background: var(--gold); height: 11px; min-width: 2px; border-radius: 8px; }
+.mk-analysis-table details summary { cursor: pointer; color: var(--red-deep); }
+.mk-analysis-days {
+  display: grid; grid-template-columns: repeat(3, minmax(85px,1fr));
+  gap: 4px 10px; padding: 8px 0; font-size: 12px; text-align: left;
+  min-width: 250px;
+}
+@media(max-width:620px) {
+  .mk-analysis-controls > .mk-field, .mk-analysis-range { flex: 1 1 100%; }
+  .mk-analysis-kpis strong { font-size: 18px; }
+}
