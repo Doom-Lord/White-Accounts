@@ -60,7 +60,7 @@
       </div>
     </div>
     <div id="ledgerMonthPicker" class="mk-month-picker mk-month-picker--bar" data-role="month-picker"></div>
-    <p class="mk-entry-tip"><b>Balance row:</b> enter a positive amount for past dues or a negative (−) amount for an advance. New months start at ₹0. Closed months are read-only.</p>
+    <p class="mk-entry-tip"><b>Balance row:</b> if a customer paid less, enter the unpaid amount as <b>positive (+)</b> so it is added to their bill. Use <b>negative (−)</b> only for an advance/overpayment, which reduces their bill. New months start at ₹0; closed months are read-only.</p>
     <div id="ledgerHost" class="mk-ledger-print"></div>
   </section>
 
@@ -103,11 +103,11 @@
     <div class="mk-panel-head">
       <div>
         <h2>Buyers</h2>
-        <p>Name, rate, previous balance — milk entry is on the Entry tab</p>
+        <p>Manage customer names and rates — adjust dues and advances in Ledger</p>
       </div>
     </div>
     <div id="buyersMonthPicker" class="mk-month-picker mk-month-picker--bar" data-role="month-picker"></div>
-    <p class="mk-entry-tip"><b>Monthly balance:</b> new months start at ₹0. Enter past dues as positive amounts and advances as negative (−) amounts, for the selected month only. You can also edit these from Ledger.</p>
+    <p class="mk-entry-tip"><b>Customer balances:</b> use the Ledger tab's Balance row for past dues or advances. Buyer rates are managed here.</p>
     <div class="mk-form" style="margin-bottom:16px;">
       <div class="mk-field">
         <label for="newBuyerName">Add one buyer</label>
@@ -246,11 +246,6 @@
       <input id="editBuyerRate" type="number" step="0.5" min="0">
       <p class="mk-tip">Also updates this month’s rate.</p>
     </div>
-    <div class="mk-field">
-      <label for="editBuyerOpening">Previous due / advance (₹) <small>— selected month only</small></label>
-      <input id="editBuyerOpening" type="number" step="0.01" value="0">
-      <p class="mk-tip">Positive = unpaid past dues. Negative (−) = advance. No automatic carry-forward to the next month.</p>
-    </div>
     <div class="mk-actions">
       <button type="button" id="saveBuyerBtn" class="mk-btn mk-btn--primary">Save</button>
       <button type="button" id="cancelBuyerBtn" class="mk-btn mk-btn--ghost">Cancel</button>
@@ -261,6 +256,6 @@
 <div id="toast" class="mk-toast"></div>
 
 <script src="analysis.js?v=ranking1"></script>
-<script src="app.js?v=manualbalance1"></script>
+<script src="app.js?v=buyerrate1"></script>
 </body>
 </html>
