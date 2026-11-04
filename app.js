@@ -1440,7 +1440,10 @@
         </div>
         ${payNum ? `
         <div class="mk-upi">
-          <img src="https://upload.wikimedia.org/wikipedia/commons/e/e1/UPI-Logo-vector.svg" alt="UPI Logo" class="mk-upi-logo">
+          <svg class="mk-upi-logo" width="72" height="24" viewBox="0 0 72 24" role="img" aria-label="UPI">
+            <rect x="0.5" y="0.5" width="71" height="23" rx="6" fill="#fff5e7" stroke="#d1bca2"></rect>
+            <text x="36" y="17" text-anchor="middle" font-family="Arial, sans-serif" font-weight="800" font-size="15" letter-spacing="1" fill="#69272b">UPI</text>
+          </svg>
           <span class="mk-upi-text">Pay via UPI</span>
           <span class="mk-upi-number">${escapeHtml(payNum)}</span>
         </div>` : ''}
