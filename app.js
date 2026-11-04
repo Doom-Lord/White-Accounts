@@ -465,7 +465,6 @@
       }
       const c = calcBuyer(entry);
       const rateVal = monthData.buyers[b.id] ? entry.rate : b.defaultRate;
-      const openingVal = monthData.buyers[b.id] ? entry.openingBalance : 0;
       return `
       <div class="mk-buyer-item ${b.active ? '' : 'mk-buyer-item--inactive'}" data-id="${escapeHtml(b.id)}">
         <div class="mk-buyer-info">
@@ -475,9 +474,6 @@
         <div class="mk-buyer-finance">
           <label>Rate ₹
             <input type="number" step="0.5" min="0" inputmode="decimal" data-fin="rate" value="${fmtNum(rateVal)}" ${b.active && !closed ? '' : 'disabled'}>
-          </label>
-          <label>Prev. due / advance
-            <input type="number" step="0.01" inputmode="decimal" data-fin="openingBalance" value="${fmtNum(openingVal)}" title="Positive = unpaid past due; negative (−) = advance. This month only." ${b.active && monthData.buyers[b.id] && !closed ? '' : 'disabled'}>
           </label>
         </div>
         <div class="mk-buyer-actions">
@@ -595,7 +591,6 @@
         $('editBuyerId').value = buyers[idx].id;
         $('editBuyerName').value = buyers[idx].name;
         $('editBuyerRate').value = buyers[idx].active && entry.rate != null ? entry.rate : buyers[idx].defaultRate;
-        $('editBuyerOpening').value = entry.openingBalance || 0;
         $('buyerModal').classList.add('mk-modal-backdrop--show');
       }
     });
@@ -617,8 +612,8 @@
         if (val <= 0) return;
         buyer.defaultRate = val;
         DB.months[ym].buyers[id].rate = val;
-      } else if (field === 'openingBalance') {
-        DB.months[ym].buyers[id].openingBalance = val;
+      } else {
+        return;
       }
       saveData(DB);
       const entry = DB.months[ym].buyers[id];
@@ -642,7 +637,6 @@
       if (!b) return;
       const name = normalizeBuyerName($('editBuyerName').value);
       const rate = parseFloat($('editBuyerRate').value);
-      const opening = parseFloat($('editBuyerOpening').value) || 0;
       if (!name || !rate || rate <= 0) {
         showToast('Enter a valid name and rate');
         return;
@@ -653,7 +647,6 @@
       ensureMonth(ym);
       if (DB.months[ym].buyers[id]) {
         DB.months[ym].buyers[id].rate = rate;
-        DB.months[ym].buyers[id].openingBalance = opening;
       }
       saveData(DB);
       $('buyerModal').classList.remove('mk-modal-backdrop--show');
