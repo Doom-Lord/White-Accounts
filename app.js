@@ -711,7 +711,7 @@
     let html = `
       <div class="mk-entry-tools">
         <div class="mk-entry-tools-row">
-          <span class="mk-entry-tools-label">⌥ Option-click dates</span>
+          <span class="mk-entry-tools-label">⌥ Option-click any milk cell</span>
           <span id="multiMilkStatus" class="mk-multi-status" role="status" aria-live="polite">No dates selected</span>
           <label class="mk-entry-inline-qty" for="multiMilkQty">
             <span>Milk (L)</span>
@@ -854,13 +854,20 @@
       updateMultiSelectionUI();
     }
 
-    // Prevent Option-click from moving the text cursor into an editable quantity.
+    // The full daily milk table cell is the Option-click target, not just its
+    // narrow number input. Ignore date and totals cells (they have no input).
+    function milkCellInput(target) {
+      const cell = target.closest('.mk-entry-table tbody td');
+      return cell ? cell.querySelector('input[data-buyer][data-day]') : null;
+    }
+
+    // Prevent the native number input from taking focus on Option-click.
     grid.addEventListener('mousedown', (e) => {
-      if (e.altKey && e.target.closest('.mk-entry-table input[data-buyer]')) e.preventDefault();
+      if (e.altKey && milkCellInput(e.target)) e.preventDefault();
     });
 
     grid.addEventListener('click', (e) => {
-      const input = e.target.closest('.mk-entry-table input[data-buyer]');
+      const input = milkCellInput(e.target);
       if (input && e.altKey) {
         if (monthIsClosed(getSelectedYM())) { showToast('Archived month is read-only'); return; }
         e.preventDefault();
