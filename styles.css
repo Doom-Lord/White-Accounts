@@ -20,7 +20,7 @@ body{
     radial-gradient(ellipse at 80% 100%, rgba(154,43,43,0.08), transparent 45%),
     var(--paper);
   color: var(--ink);
-  font-family: 'Inter', 'Noto Sans Devanagari', sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Kohinoor Devanagari", "Devanagari Sangam MN", sans-serif;
   min-height:100vh;
   padding: 20px 12px 60px;
 }
@@ -37,7 +37,7 @@ body{
 .mk-brand{ display:flex; align-items:center; gap:10px; }
 .mk-brand-emoji{ font-size:30px; line-height:1; }
 .mk-brand h1{
-  font-family:'Zilla Slab', Georgia, serif;
+  font-family:Georgia, "Kohinoor Devanagari", "Devanagari Sangam MN", serif;
   font-size: 22px; margin:0; color:var(--red-deep); letter-spacing:.2px;
 }
 .mk-brand p{ margin:2px 0 0; font-size:12.5px; color:var(--ink-soft); }
@@ -72,7 +72,7 @@ body{
   gap:12px; flex-wrap:wrap; margin-bottom: 14px;
 }
 .mk-panel-head h2{
-  font-family:'Zilla Slab', Georgia, serif;
+  font-family:Georgia, "Kohinoor Devanagari", "Devanagari Sangam MN", serif;
   font-size: 20px; margin:0; color:var(--red-deep);
 }
 .mk-panel-head p{ margin:4px 0 0; font-size:13px; color:var(--ink-soft); }
@@ -92,7 +92,7 @@ body{
   margin-right: 6px;
 }
 .mk-month-picker .mk-year-label{
-  font-family:'Zilla Slab', Georgia, serif;
+  font-family:Georgia, "Kohinoor Devanagari", "Devanagari Sangam MN", serif;
   font-weight:700; font-size:14px; color:var(--red-deep);
   min-width: 3.2em; text-align:center;
 }
@@ -238,7 +238,7 @@ body{
   box-shadow: 0 4px 14px var(--shadow);
 }
 .mk-empty-cta h3{
-  font-family:'Zilla Slab', Georgia, serif;
+  font-family:Georgia, "Kohinoor Devanagari", "Devanagari Sangam MN", serif;
   margin:0 0 8px; font-size:18px; color:var(--red-deep);
   font-style: normal;
 }
@@ -265,7 +265,7 @@ body{
 }
 .mk-meta-card h3{
   margin:0 0 8px; font-size:13px; color:var(--red-deep);
-  font-family:'Zilla Slab', Georgia, serif;
+  font-family:Georgia, "Kohinoor Devanagari", "Devanagari Sangam MN", serif;
 }
 .mk-meta-row{
   display:flex; align-items:center; justify-content:space-between; gap:8px;
@@ -357,7 +357,7 @@ body{
   display:inline-block;
   border: 1.5px solid var(--red-deep);
   padding: 4px 16px;
-  font-family:'Zilla Slab', Georgia, serif;
+  font-family:Georgia, "Kohinoor Devanagari", "Devanagari Sangam MN", serif;
   font-size: 18px; font-weight: 700; color: var(--red-deep);
 }
 .mk-ledger-header{
@@ -370,12 +370,12 @@ body{
   border-bottom: 1px solid var(--paper-margin);
 }
 .mk-ledger-header-farm{
-  font-family:'Zilla Slab', Georgia, serif;
+  font-family:Georgia, "Kohinoor Devanagari", "Devanagari Sangam MN", serif;
   font-size: 16px; font-weight: 700; margin:0;
   color:var(--red-deep); text-align:left; line-height:1.25;
 }
 .mk-ledger-header-month{
-  font-family:'Zilla Slab', Georgia, serif;
+  font-family:Georgia, "Kohinoor Devanagari", "Devanagari Sangam MN", serif;
   font-size: 15px; font-weight: 700; margin:0;
   color:var(--ink); text-align:left; white-space:nowrap;
 }
@@ -412,11 +412,11 @@ body{
   background: var(--white);
 }
 .mk-receipt-shri{
-  font-family:'Baloo 2', 'Noto Sans Devanagari', sans-serif; font-weight:700; color:var(--red); font-size:16px;
+  font-family:"Kohinoor Devanagari", "Devanagari Sangam MN", sans-serif; font-weight:700; color:var(--red); font-size:16px;
   letter-spacing:.5px; margin-bottom:4px;
 }
 .mk-receipt-farm{
-  font-family:'Zilla Slab', 'Noto Sans Devanagari', serif; font-weight:700;
+  font-family:Georgia, "Kohinoor Devanagari", "Devanagari Sangam MN", serif; font-weight:700;
   font-size: 24px; color:var(--red-deep);
 }
 .mk-receipt-mobile{ font-size:12.5px; color:var(--ink-soft); margin-top:2px; }
@@ -458,7 +458,7 @@ body{
   display:flex; justify-content:space-between; align-items:center;
   background: var(--paper); border:1px solid var(--gold);
   border-radius:8px; padding: 12px 14px; margin-top:6px;
-  font-family: 'Inter', 'Noto Sans Devanagari', sans-serif; font-weight:700; font-size:22px; color:var(--red-deep);
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Kohinoor Devanagari", "Devanagari Sangam MN", sans-serif; font-weight:700; font-size:22px; color:var(--red-deep);
 }
 .mk-receipt-footer{ margin-top:16px; font-size:12px; color:var(--ink-soft); }
 
@@ -473,7 +473,7 @@ body{
 }
 .mk-upi-text{ font-size:12px; color:var(--ink-soft); }
 .mk-upi-number{
-  font-family:'Inter', 'Noto Sans Devanagari', sans-serif;
+  font-family:-apple-system, BlinkMacSystemFont, "Helvetica Neue", "Kohinoor Devanagari", "Devanagari Sangam MN", sans-serif;
   font-size:17px; font-weight:700; color:var(--red-deep); letter-spacing:.5px;
 }
 
@@ -504,7 +504,7 @@ body{
   border: 1px solid var(--paper-margin);
 }
 .mk-modal h3{
-  font-family:'Zilla Slab', Georgia, serif;
+  font-family:Georgia, "Kohinoor Devanagari", "Devanagari Sangam MN", serif;
   margin:0 0 14px; color:var(--red-deep); font-size:18px;
 }
 
@@ -729,7 +729,7 @@ body{
   body {
     background: var(--paper);
     color: var(--ink);
-    font-family: -apple-system, BlinkMacSystemFont, "Inter", "Kohinoor Devanagari", "Noto Sans Devanagari", sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Kohinoor Devanagari", "Devanagari Sangam MN", sans-serif;
     -webkit-font-smoothing: antialiased;
     padding: 20px clamp(14px, 2.4vw, 38px) 42px;
     line-height: 1.45;
@@ -795,7 +795,7 @@ body{
   /* Hierarchy and shared surfaces */
   .mk-panel-head { margin-bottom: 16px; }
   .mk-panel-head h2 {
-    font-family: -apple-system, BlinkMacSystemFont, "Inter", "Kohinoor Devanagari", sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Kohinoor Devanagari", "Devanagari Sangam MN", sans-serif;
     color: #442a2b;
     letter-spacing: -.028em;
     font-size: 22px;
