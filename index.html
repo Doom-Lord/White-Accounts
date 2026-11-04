@@ -7,7 +7,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%A5%9B%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@500;700&family=Inter:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Baloo+2:wght@600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=manualbalance1">
+<link rel="stylesheet" href="styles.css?v=ledgernote1">
 </head>
 <body>
 <div class="mk-wrap">
@@ -60,8 +60,17 @@
       </div>
     </div>
     <div id="ledgerMonthPicker" class="mk-month-picker mk-month-picker--bar" data-role="month-picker"></div>
-    <p class="mk-entry-tip"><b>Balance row:</b> enter a positive amount for past dues or a negative (−) amount for an advance. New months start at ₹0. Closed months are read-only.</p>
+    <p class="mk-entry-tip"><b>Balance row:</b> manually enter past dues or advances for this month. New months start at ₹0; closed months are read-only.</p>
     <div id="ledgerHost" class="mk-ledger-print"></div>
+    <!-- Screen-only reminder: outside the generated Ledger and Markdown export. -->
+    <aside class="mk-ledger-sign-note" aria-label="Ledger balance positive and negative reminder">
+      <strong class="mk-ledger-sign-title">याद रखें — Balance में + और − का मतलब</strong>
+      <div class="mk-ledger-sign-grid">
+        <p><b>+ पॉज़िटिव (जोड़ें):</b> ग्राहक ने पैसे <b>कम दिए</b> हैं या पिछला बकाया है। जैसे <b>+₹500</b> डालने पर बिल में ₹500 <b>जुड़ेंगे</b>।</p>
+        <p><b>− नेगेटिव (घटाएँ):</b> ग्राहक ने पैसे <b>ज़्यादा दिए</b> हैं या एडवांस जमा है। जैसे <b>−₹500</b> डालने पर बिल से ₹500 <b>घटेंगे</b>।</p>
+      </div>
+      <small>यह केवल आपकी स्क्रीन पर याद दिलाने के लिए है; Markdown डाउनलोड में नहीं आएगा।</small>
+    </aside>
   </section>
 
   <!-- ========== RECEIPT ========== -->
