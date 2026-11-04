@@ -142,7 +142,7 @@
 
   let DB = loadData();
 
-  // Closed months stay in DB.months to preserve existing balance carry-forward.
+  // Closed months stay in DB.months to preserve historical receipts and saved balances.
   function monthIsClosed(ym) {
     return !!(DB.closedMonths && DB.closedMonths[ym]);
   }
@@ -191,18 +191,15 @@
     if (!DB.months[ym]) DB.months[ym] = { buyers: {} };
     if (monthIsClosed(ym)) return DB.months[ym];
     const buyers = activeBuyersSorted();
-    const prevKey = prevYM(ym);
-    const prevMonth = DB.months[prevKey];
 
     buyers.forEach((b) => {
       if (!DB.months[ym].buyers[b.id]) {
-        let opening = 0;
-        if (prevMonth && prevMonth.buyers[b.id]) {
-          opening = calcBuyer(prevMonth.buyers[b.id]).net;
-        }
+        // The next month's bill is not a receipt for this month's bill.
+        // Dues/advances are entered manually in that specific month.
+        // Never change existing month rows, including restored backups.
         DB.months[ym].buyers[b.id] = {
           rate: b.defaultRate,
-          openingBalance: opening,
+          openingBalance: 0,
           adjustment: 0,
           days: {}
         };
@@ -479,8 +476,8 @@
           <label>Rate ₹
             <input type="number" step="0.5" min="0" inputmode="decimal" data-fin="rate" value="${fmtNum(rateVal)}" ${b.active && !closed ? '' : 'disabled'}>
           </label>
-          <label>Prev. balance
-            <input type="number" step="1" inputmode="decimal" data-fin="openingBalance" value="${fmtNum(openingVal)}" title="Negative (−) = paid this much less last month" ${b.active && monthData.buyers[b.id] && !closed ? '' : 'disabled'}>
+          <label>Prev. due / advance
+            <input type="number" step="0.01" inputmode="decimal" data-fin="openingBalance" value="${fmtNum(openingVal)}" title="Positive = unpaid past due; negative (−) = advance. This month only." ${b.active && monthData.buyers[b.id] && !closed ? '' : 'disabled'}>
           </label>
         </div>
         <div class="mk-buyer-actions">
@@ -1146,7 +1143,21 @@
 
     ledgerFooterRows().forEach((row) => {
       html += `<tr class="mk-footer-row"><td>${row.label}</td>`;
-      calcs.forEach((c) => { html += `<td>${row.get(c)}</td>`; });
+      calcs.forEach((c, i) => {
+        const buyer = buyers[i];
+        const entry = monthData.buyers[buyer.id];
+        if (row.label === 'Balance' && entry && !monthIsClosed(ym)) {
+          // Edit the displayed Balance (opening + legacy adjustment), not the
+          // daily milk, rate, or NET. Positive = due; negative = advance.
+          html += `<td><input type="number" step="0.01" inputmode="decimal"
+            class="mk-ledger-balance-input" data-ledger-buyer="${escapeHtml(buyer.id)}"
+            aria-label="Previous due or advance for ${escapeHtml(buyer.name)} in ${escapeHtml(monthLabel(ym))}"
+            title="Positive: previous due. Negative: advance. Applies only to this month."
+            value="${fmtNum(c.opening + c.adj)}"></td>`;
+        } else {
+          html += `<td>${row.get(c)}</td>`;
+        }
+      });
       html += '</tr>';
     });
 
@@ -1250,6 +1261,48 @@
   }
 
   function bindLedger() {
+    // Write manual dues/advances back to the current month only.
+    // Existing adjustments in older JSON backups are preserved.
+    $('ledgerHost').addEventListener('change', (event) => {
+      const input = event.target.closest('input[data-ledger-buyer]');
+      if (!input) return;
+      const ym = getSelectedYM();
+      if (monthIsClosed(ym)) {
+        renderLedger();
+        showToast('Archived month is read-only');
+        return;
+      }
+      const entry = DB.months[ym] && DB.months[ym].buyers[input.dataset.ledgerBuyer];
+      if (!entry) {
+        renderLedger();
+        showToast('No customer entry for the selected month');
+        return;
+      }
+      const raw = input.value.trim();
+      const amount = raw === '' ? 0 : Number(raw);
+      if (!Number.isFinite(amount) || Math.abs(amount) > 1e10) {
+        renderLedger();
+        showToast('Enter a valid balance (positive due or negative advance)');
+        return;
+      }
+      const previous = entry.openingBalance;
+      const adjustment = Number(entry.adjustment) || 0;
+      entry.openingBalance = Math.round((amount - adjustment) * 100) / 100;
+      try {
+        saveData(DB);
+      } catch (error) {
+        entry.openingBalance = previous;
+        renderLedger();
+        showToast('Could not save the balance; export a backup and check storage');
+        return;
+      }
+      const sheet = $('ledgerSheet');
+      const x = sheet ? sheet.scrollLeft : 0;
+      renderLedger();
+      if ($('ledgerSheet')) $('ledgerSheet').scrollLeft = x;
+      showToast('Monthly balance saved — other months unchanged');
+    });
+
     $('downloadLedgerMdBtn').addEventListener('click', () => {
       const ym = getSelectedYM();
       ensureMonth(ym);
