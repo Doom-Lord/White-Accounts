@@ -698,3 +698,398 @@ body{
   opacity: 1;
   cursor: default;
 }
+
+
+/* ==========================================================
+   White Accounts / Desktop design polish (screen only)
+   Principles: quiet hierarchy, dense editable tables, accessible
+   focus states, immediate keyboard response, restrained motion.
+   Print output intentionally retains the original receipt/ledger style.
+   ========================================================== */
+@media screen {
+  :root {
+    --paper: #f5f2ec;
+    --white: #fffefa;
+    --paper-margin: rgba(106, 77, 56, .19);
+    --red: #913333;
+    --red-deep: #69272b;
+    --ink: #2b2825;
+    --ink-soft: #655e57;
+    --gold: #d0a148;
+    --gold-deep: #b18332;
+    --shadow: rgba(70, 48, 31, .08);
+    --ui-stroke: rgba(102, 76, 53, .15);
+    --ui-stroke-strong: rgba(102, 76, 53, .27);
+    --ui-shadow: 0 3px 14px rgba(70, 48, 31, .045), 0 14px 32px rgba(70, 48, 31, .025);
+    --ui-focus: rgba(192, 138, 46, .24);
+  }
+
+  html { color-scheme: light; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Inter", "Kohinoor Devanagari", "Noto Sans Devanagari", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    padding: 20px clamp(14px, 2.4vw, 38px) 42px;
+    line-height: 1.45;
+  }
+  .mk-wrap { max-width: 1480px; }
+
+  /* A quiet desktop header, with the existing farm identity retained. */
+  .mk-top {
+    margin-bottom: 14px;
+    padding: 0 2px 16px;
+    border-bottom: 1px solid var(--ui-stroke);
+    min-height: 52px;
+  }
+  .mk-brand { gap: 12px; }
+  .mk-brand-emoji {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    flex: none;
+    font-size: 25px;
+    background: #fff9ec;
+    border: 1px solid rgba(192, 138, 46, .2);
+    border-radius: 13px;
+    box-shadow: 0 2px 5px rgba(65, 40, 20, .04);
+  }
+  .mk-brand h1 {
+    font-size: 23px;
+    line-height: 1.15;
+    letter-spacing: -.025em;
+  }
+
+  /* Navigation: clear current tab, visible focus, no slow slide effects. */
+  .mk-nav {
+    gap: 5px;
+    padding: 5px;
+    border: 1px solid var(--ui-stroke);
+    background: #eae5dd;
+    border-radius: 13px;
+    box-shadow: inset 0 1px 1px rgba(55, 40, 25, .025);
+    margin-bottom: 20px;
+  }
+  .mk-nav-btn {
+    min-height: 37px;
+    padding: 8px 13px;
+    border-radius: 9px;
+    color: #514b45;
+    font-size: 13px;
+    font-weight: 650;
+    letter-spacing: -.01em;
+  }
+  .mk-nav-btn:hover:not(.mk-nav-btn--active) {
+    color: var(--red-deep);
+    background: rgba(255, 255, 255, .58);
+  }
+  .mk-nav-btn--active,
+  .mk-nav-btn--active:hover {
+    background: var(--red-deep);
+    color: #fff;
+    box-shadow: 0 1px 4px rgba(65, 22, 25, .16);
+  }
+
+  /* Hierarchy and shared surfaces */
+  .mk-panel-head { margin-bottom: 16px; }
+  .mk-panel-head h2 {
+    font-family: -apple-system, BlinkMacSystemFont, "Inter", "Kohinoor Devanagari", sans-serif;
+    color: #442a2b;
+    letter-spacing: -.028em;
+    font-size: 22px;
+    font-weight: 730;
+    line-height: 1.2;
+  }
+  .mk-panel-head p { font-size: 13px; margin-top: 5px; }
+  .mk-form,
+  .mk-card,
+  .mk-entry-tools,
+  .mk-grid-scroll,
+  .mk-ledger-wrap,
+  .mk-receipt-wrap,
+  .mk-buyer-item,
+  .mk-analysis-controls,
+  .mk-analysis-kpis > div {
+    border: 1px solid var(--ui-stroke);
+    background: var(--white);
+    border-radius: 12px;
+    box-shadow: var(--ui-shadow);
+  }
+  .mk-form { padding: 20px 22px; }
+  .mk-card { padding: 18px 20px; }
+  .mk-entry-tools { padding: 10px 13px; margin-bottom: 10px; }
+  .mk-entry-tools-row { gap: 8px 12px; }
+  .mk-entry-tools-label { font-weight: 700; color: var(--red-deep); }
+  .mk-entry-inline-qty input { width: 95px; }
+  .mk-month-fill-details { border-top-color: var(--ui-stroke); }
+  .mk-entry-shortcuts { margin: 3px 0 9px; color: var(--ink-soft); }
+  .mk-entry-tip { font-size: 12.5px; }
+
+  /* Reuse one consistent control treatment without impacting disabled state. */
+  .mk-field label { color: #5e3738; font-size: 12.5px; margin-bottom: 6px; }
+  .mk-field input,
+  .mk-field textarea,
+  .mk-field select,
+  .mk-select-inline,
+  .mk-input-inline,
+  .mk-buyer-finance input,
+  .mk-meta-row input,
+  .mk-entry-inline-qty input,
+  .mk-month-fill-content select,
+  .mk-month-fill-content input[type="number"],
+  .mk-analysis-controls select,
+  .mk-analysis-controls input {
+    color: var(--ink);
+    background: #fff;
+    border: 1px solid var(--ui-stroke-strong);
+    border-radius: 8px;
+    font-family: inherit;
+    box-shadow: 0 1px 1px rgba(50, 38, 25, .02);
+  }
+  .mk-field input:focus,
+  .mk-field textarea:focus,
+  .mk-field select:focus,
+  .mk-select-inline:focus,
+  .mk-input-inline:focus,
+  .mk-buyer-finance input:focus,
+  .mk-meta-row input:focus,
+  .mk-entry-inline-qty input:focus,
+  .mk-month-fill-content select:focus,
+  .mk-month-fill-content input:focus,
+  .mk-analysis-controls select:focus,
+  .mk-analysis-controls input:focus {
+    outline: 2px solid var(--gold);
+    outline-offset: 1px;
+    border-color: var(--gold-deep);
+    box-shadow: 0 0 0 4px var(--ui-focus);
+  }
+  .mk-field input:disabled,
+  .mk-field select:disabled,
+  .mk-buyer-finance input:disabled,
+  .mk-entry-inline-qty input:disabled {
+    background: #f2efea;
+    color: #5e5852;
+    opacity: 1;
+  }
+
+  /* Buttons remain immediate, with accessible keyboard focus. */
+  .mk-btn {
+    min-height: 37px;
+    border-radius: 9px;
+    padding: 9px 15px;
+    font-size: 13px;
+    font-weight: 675;
+    line-height: 1.25;
+    box-shadow: 0 1px 2px rgba(65, 40, 20, .055);
+  }
+  .mk-btn--sm { min-height: 32px; padding: 6px 11px; font-size: 12.5px; }
+  .mk-btn--primary { background: var(--red-deep); color: #fff; }
+  .mk-btn--primary:hover { background: #7c3035; color: #fff; }
+  .mk-btn--ghost { background: #fff; border: 1px solid var(--ui-stroke-strong); }
+  .mk-btn--ghost:hover { background: #f7f3ed; }
+  .mk-btn:active:not(:disabled) { filter: brightness(.96); }
+  .mk-btn:disabled { opacity: .52; box-shadow: none; }
+  .mk-btn:focus-visible,
+  .mk-nav-btn:focus-visible,
+  .mk-month-btn:focus-visible,
+  .mk-year-nav:focus-visible,
+  .mk-month-fill-details summary:focus-visible,
+  .mk-analysis-table summary:focus-visible {
+    outline: 3px solid var(--gold);
+    outline-offset: 2px;
+  }
+
+  /* Month strip: compact, familiar segmented control on macOS. */
+  .mk-month-picker--bar {
+    margin-bottom: 9px;
+    padding: 7px 10px;
+    background: #eeebe5;
+    border: 1px solid var(--ui-stroke);
+    border-radius: 11px;
+  }
+  .mk-month-picker .mk-year-label {
+    font-family: inherit;
+    font-size: 13px;
+    color: var(--red-deep);
+    font-variant-numeric: tabular-nums;
+  }
+  .mk-month-btn,
+  .mk-year-nav {
+    min-height: 30px;
+    padding: 5px 9px;
+    border: 1px solid transparent;
+    border-radius: 7px;
+    background: transparent;
+    color: #655c54;
+    font-size: 12px;
+  }
+  .mk-month-btn:hover:not(.mk-month-btn--active),
+  .mk-year-nav:hover {
+    background: rgba(255, 255, 255, .85);
+    color: var(--red-deep);
+  }
+  .mk-month-btn--active,
+  .mk-month-btn--active:hover {
+    background: #fff;
+    color: var(--red-deep);
+    border-color: var(--ui-stroke);
+    box-shadow: 0 1px 4px rgba(50, 34, 18, .11);
+  }
+
+  /* Daily entry / ledger: less visual noise, sticky headings, clear selection. */
+  .mk-grid-scroll { max-height: min(72vh, 810px); overflow: auto; }
+  .mk-entry-table,
+  .mk-ledger-table {
+    font-variant-numeric: tabular-nums;
+    font-size: 12.5px;
+  }
+  .mk-entry-table th,
+  .mk-entry-table td,
+  .mk-ledger-table th,
+  .mk-ledger-table td {
+    border-color: var(--ui-stroke);
+  }
+  .mk-entry-table th,
+  .mk-ledger-table th {
+    background: #eee8e0;
+    color: #63343a;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 9px 9px;
+  }
+  .mk-entry-table td,
+  .mk-ledger-table td { padding: 5px 7px; }
+  .mk-entry-table th:first-child,
+  .mk-entry-table td:first-child,
+  .mk-ledger-table th:first-child,
+  .mk-ledger-table td:first-child {
+    background: #f5efe6;
+    color: #53363a;
+  }
+  .mk-entry-table th:first-child,
+  .mk-ledger-table th:first-child { background: #eae2d7; }
+  .mk-entry-table tbody tr:not(.mk-today):not(.mk-footer-row):hover td:not(.mk-cell-selected) {
+    background: #faf6ef;
+  }
+  .mk-entry-table tr.mk-today { background: #fff5df; }
+  .mk-entry-table tr.mk-today td:first-child { background: #f9e9c7; }
+  .mk-entry-table input[type="number"] {
+    width: 68px;
+    min-height: 30px;
+    border-radius: 6px;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+  .mk-entry-table input[type="number"]:focus {
+    outline: 2px solid var(--gold);
+    outline-offset: -1px;
+    border-color: var(--gold-deep);
+    background: #fff;
+  }
+  .mk-entry-table td.mk-cell-selected,
+  .mk-entry-table tr.mk-today td.mk-cell-selected {
+    background: #dfeef9;
+    box-shadow: inset 0 0 0 2px #3578a5;
+  }
+  .mk-entry-table td.mk-cell-selected input[type="number"] { font-weight: 700; }
+  .mk-entry-table .mk-footer-row td,
+  .mk-ledger-table .mk-footer-row td {
+    background: #f0eae1;
+    color: #56353a;
+  }
+  .mk-totals-bar { gap: 9px; font-variant-numeric: tabular-nums; }
+  .mk-totals-bar > span {
+    padding: 8px 11px;
+    background: #fff;
+    border: 1px solid var(--ui-stroke);
+    border-radius: 8px;
+  }
+  .mk-totals-bar > span.mk-tip { padding: 8px 11px; }
+
+  /* Customer analysis: less wasted space above the data. */
+  .mk-analysis-controls {
+    padding: 13px 15px;
+    gap: 12px;
+    align-items: end;
+    margin-bottom: 14px;
+  }
+  .mk-analysis-controls .mk-field { margin-bottom: 0; }
+  .mk-analysis-controls select,
+  .mk-analysis-controls input { min-height: 38px; font-size: 13px; }
+  .mk-analysis-range { gap: 12px; }
+  .mk-analysis-kpis { gap: 11px; margin-bottom: 13px; }
+  .mk-analysis-kpis > div { padding: 14px 16px; min-width: 0; }
+  .mk-analysis-kpis small { color: var(--ink-soft); font-size: 12px; line-height: 1.35; }
+  .mk-analysis-kpis strong {
+    display: block;
+    font-size: clamp(18px, 1.65vw, 24px);
+    line-height: 1.25;
+    margin-top: 7px;
+    color: var(--red-deep);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -.025em;
+    overflow-wrap: anywhere;
+  }
+  .mk-analysis-table td { padding: 9px 12px; }
+  .mk-analysis-table details summary {
+    border-radius: 4px;
+    color: var(--red-deep);
+    text-underline-offset: 2px;
+  }
+  .mk-analysis-bar { border-radius: 999px; background: #c2923f; }
+
+  /* Buyer list and confirmation affordances. */
+  .mk-buyer-item { padding: 14px 16px; gap: 10px 14px; }
+  .mk-buyer-info strong { color: var(--red-deep); }
+  .mk-buyer-info span,
+  .mk-buyer-finance label { color: var(--ink-soft); }
+  .mk-buyer-finance input { font-variant-numeric: tabular-nums; }
+  .mk-buyer-item--inactive { opacity: .65; }
+  .mk-month-closing {
+    background: #fff;
+    border: 1px solid var(--ui-stroke);
+    border-radius: 10px;
+    padding: 9px 12px;
+  }
+  .mk-month-closing--closed {
+    background: #fff7e7;
+    border-color: #d8bd84;
+  }
+  .mk-receipt-wrap { padding: 24px; }
+  .mk-receipt { box-shadow: 0 4px 12px rgba(50, 32, 20, .035); }
+  .mk-empty-cta {
+    box-shadow: var(--ui-shadow);
+    border: 1px dashed var(--ui-stroke-strong);
+    border-radius: 12px;
+  }
+  .mk-toast { transition: transform .18s ease-out, opacity .18s ease-out; }
+  .mk-modal { border-color: var(--ui-stroke); border-radius: 14px; box-shadow: 0 20px 50px rgba(28, 20, 15, .18); }
+  .mk-modal-backdrop { background: rgba(35, 28, 24, .4); }
+
+  @media (max-width: 900px) {
+    body { padding: 13px 12px 32px; }
+    .mk-nav {
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin;
+    }
+    .mk-nav-btn { flex: none; }
+    .mk-receipt-wrap { padding: 16px; }
+  }
+  @media (max-width: 620px) {
+    .mk-top { margin-bottom: 10px; padding-bottom: 12px; }
+    .mk-brand-emoji { width: 39px; height: 39px; font-size: 23px; }
+    .mk-brand h1 { font-size: 20px; }
+    .mk-panel-head h2 { font-size: 20px; }
+    .mk-form, .mk-card { padding: 15px 14px; }
+    .mk-analysis-controls { padding: 12px; }
+    .mk-analysis-kpis > div { padding: 12px; }
+    .mk-month-picker--bar { overflow-x: auto; }
+    .mk-entry-table th, .mk-ledger-table th { padding: 8px 6px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .mk-toast { transition: opacity .1s linear; transform: translate(-50%, 0); }
+  }
+}
