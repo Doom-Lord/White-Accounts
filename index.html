@@ -7,7 +7,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%A5%9B%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@500;700&family=Inter:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Baloo+2:wght@600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=reversesign1">
+<link rel="stylesheet" href="styles.css?v=compactbalance1">
 </head>
 <body>
 <div class="mk-wrap">
@@ -60,16 +60,12 @@
       </div>
     </div>
     <div id="ledgerMonthPicker" class="mk-month-picker mk-month-picker--bar" data-role="month-picker"></div>
-    <p class="mk-entry-tip"><b>Balance row:</b> enter <b>negative (−)</b> for money the customer paid less (adds to the bill), or <b>positive (+)</b> for advance/overpayment (deducts). New months start at ₹0; closed months are read-only.</p>
+    <p class="mk-entry-tip">Edit balances for the selected month. New months start at ₹0; closed months are read-only.</p>
     <div id="ledgerHost" class="mk-ledger-print"></div>
-    <!-- Screen-only reminder: outside the generated Ledger and Markdown export. -->
-    <aside class="mk-ledger-sign-note" aria-label="Ledger balance positive and negative reminder">
-      <strong class="mk-ledger-sign-title">याद रखें — Balance में + और − का मतलब</strong>
-      <div class="mk-ledger-sign-grid">
-        <p><b>− नेगेटिव (कम पैसे मिले):</b> ग्राहक ने पिछले महीने पैसे <b>कम दिए</b> हैं। जैसे <b>−₹500</b> डालने पर अगले बिल में ₹500 <b>जुड़ेंगे</b>।</p>
-        <p><b>+ पॉज़िटिव (एडवांस मिला):</b> ग्राहक ने पैसे <b>ज़्यादा दिए</b> हैं या एडवांस है। जैसे <b>+₹500</b> डालने पर अगले बिल से ₹500 <b>घटेंगे</b>।</p>
-      </div>
-      <small>यह केवल आपकी स्क्रीन पर याद दिलाने के लिए है; Markdown डाउनलोड में नहीं आएगा।</small>
+    <!-- Screen-only reference, outside ledger data and Markdown generation. -->
+    <aside class="mk-ledger-sign-note" aria-label="Balance sign reminder">
+      <span class="mk-ledger-note-negative"><b>Negative Balance:</b> They paid this much less.</span>
+      <span class="mk-ledger-note-positive"><b>Positive Balance:</b> The customer paid extra.</span>
     </aside>
   </section>
 
