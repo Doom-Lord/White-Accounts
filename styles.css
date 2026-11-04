@@ -1191,3 +1191,46 @@ body{
     border-color: var(--gold-deep);
   }
 }
+
+/* A small, screen-only Hindi reminder beneath the Ledger, never in exports. */
+@media screen {
+  .mk-ledger-sign-note {
+    margin: 15px 0 4px;
+    padding: 13px 16px;
+    border: 1px solid var(--ui-stroke);
+    border-radius: 11px;
+    background: var(--white);
+    box-shadow: var(--ui-shadow);
+    line-height: 1.55;
+  }
+  .mk-ledger-sign-title {
+    display: block;
+    color: var(--red-deep);
+    font-size: 13px;
+    font-weight: 725;
+    margin-bottom: 8px;
+  }
+  .mk-ledger-sign-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 20px;
+  }
+  .mk-ledger-sign-grid p {
+    font-size: 12.5px;
+    margin: 0;
+    color: var(--ink);
+  }
+  .mk-ledger-sign-grid b { color: var(--red-deep); }
+  .mk-ledger-sign-note small {
+    display: block;
+    margin-top: 9px;
+    font-size: 11.5px;
+    color: var(--ink-soft);
+  }
+  @media (max-width: 700px) {
+    .mk-ledger-sign-grid { grid-template-columns: 1fr; }
+  }
+}
+@media print {
+  .mk-ledger-sign-note { display: none !important; }
+}
