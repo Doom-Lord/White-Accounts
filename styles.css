@@ -1095,3 +1095,75 @@ body{
     .mk-toast { transition: opacity .1s linear; transform: translate(-50%, 0); }
   }
 }
+
+
+/* Customer ranking lives under Customer Analysis's monthly table; screen only. */
+@media screen {
+  .mk-ranking {
+    margin-top: 25px;
+    padding-top: 19px;
+    border-top: 1px solid var(--ui-stroke);
+  }
+  .mk-ranking-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 10px 16px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+  .mk-ranking-heading h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 730;
+    letter-spacing: -.022em;
+    color: var(--red-deep);
+  }
+  .mk-ranking-heading p { margin: 4px 0 0; color: var(--ink-soft); font-size: 12.5px; }
+  .mk-ranking-count {
+    font-size: 12px;
+    font-weight: 650;
+    color: var(--ink-soft);
+    white-space: nowrap;
+  }
+  .mk-ranking-highlight {
+    display: grid;
+    grid-template-columns: minmax(0, 1.5fr) repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .mk-ranking-highlight > div {
+    min-width: 0;
+    padding: 12px 14px;
+    background: var(--white);
+    border: 1px solid var(--ui-stroke);
+    border-radius: 11px;
+    box-shadow: var(--ui-shadow);
+  }
+  .mk-ranking-highlight small {
+    display: block;
+    color: var(--ink-soft);
+    font-size: 12px;
+  }
+  .mk-ranking-highlight strong {
+    display: block;
+    margin-top: 5px;
+    color: var(--red-deep);
+    font-size: 19px;
+    font-weight: 720;
+    overflow-wrap: anywhere;
+    font-variant-numeric: tabular-nums;
+  }
+  .mk-ranking-scroll { max-height: none; overflow-x: auto; overflow-y: auto; }
+  .mk-ranking-table { width: 100%; min-width: 760px; font-variant-numeric: tabular-nums; }
+  .mk-ranking-table th, .mk-ranking-table td { padding: 10px 12px; }
+  .mk-ranking-table td.mk-ranking-name { font-weight: 650; text-align: left; white-space: normal; min-width: 150px; }
+  .mk-ranking-table tr.mk-ranking-selected td { background: #fff4df; }
+  .mk-ranking-table tr.mk-ranking-selected td:first-child { background: #faeacc; }
+  .mk-ranking .mk-tip { line-height: 1.5; }
+  @media (max-width: 640px) {
+    .mk-ranking-highlight { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .mk-ranking-highlight > div:first-child { grid-column: span 2; }
+    .mk-ranking-highlight strong { font-size: 17px; }
+  }
+}
