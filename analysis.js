@@ -272,6 +272,72 @@
     toSelect.value = months.indexOf(oldTo) >= 0 ? oldTo : last;
   }
 
+  // Rank every customer within the same date window as the monthly table.
+  // Use collect() so archived months take precedence over duplicate live records.
+  // The ranking always compares all customers, even if one is selected above.
+  function rankCustomers(data, custom, from, to, todayMonth) {
+    var summary = Object.create(null);
+    Object.keys(data.months).sort().forEach(function (ym) {
+      if ((!custom && ym > todayMonth) || (from && ym < from) || (to && ym > to)) return;
+      Object.keys(data.months[ym]).forEach(function (key) {
+        var record = data.months[ym][key], qty = sumDays(record.days);
+        if (qty <= 0) return;
+        if (!summary[key]) {
+          summary[key] = {
+            key:key, name:data.groups[key] || key, qty:0,
+            months:0, days:0, billed:0, billedComplete:true
+          };
+        }
+        var item = summary[key];
+        item.qty += qty;
+        item.months++;
+        item.days += Object.keys(record.days || {}).filter(function (day) {
+          return Number(record.days[day]) > 0;
+        }).length;
+        if (record.billed === null) item.billedComplete = false;
+        else item.billed += record.billed;
+      });
+    });
+    return Object.keys(summary).map(function (key) { return summary[key]; }).sort(function (a,b) {
+      return b.qty - a.qty || a.name.localeCompare(b.name, 'hi');
+    });
+  }
+
+  function renderCustomerRanking(data, selected, custom, from, to, todayMonth) {
+    var ranking = rankCustomers(data, custom, from, to, todayMonth);
+    var intro = '<section class="mk-ranking" aria-labelledby="mkRankingHeading">' +
+      '<div class="mk-ranking-heading"><div><h3 id="mkRankingHeading">Customer milk purchase ranking</h3>' +
+      '<p>All customers, highest milk volume first, for the period above.</p></div>' +
+      '<span class="mk-ranking-count">' + ranking.length + ' purchasing customers</span></div>';
+    if (!ranking.length) return intro +
+      '<p class="mk-empty">No milk purchases to rank in this period.</p></section>';
+
+    var total = ranking.reduce(function (s,r) { return s + r.qty; },0);
+    var leader = ranking[0];
+    var result = intro +
+      '<div class="mk-ranking-highlight"><div><small>Highest milk purchaser</small>' +
+      '<strong>' + safe(leader.name) + '</strong></div>' +
+      '<div><small>Total milk</small><strong>' + litres(leader.qty) + ' L</strong></div>' +
+      '<div><small>Share of all purchases</small><strong>' + litres(leader.qty / total * 100) + '%</strong></div></div>';
+    if (selected) result += '<p class="mk-tip">This ranking includes every customer for comparison, even though the monthly table above is filtered to one customer.</p>';
+
+    result += '<div class="mk-grid-scroll mk-ranking-scroll"><table class="mk-ledger-table mk-ranking-table">' +
+      '<thead><tr><th>Rank</th><th>Customer</th><th>Milk purchased</th><th>Share</th>' +
+      '<th>Purchase months</th><th>Milk days</th><th>Total billed (not paid)</th></tr></thead><tbody>';
+    ranking.forEach(function (r,i) {
+      result += '<tr' + (r.key === selected ? ' class="mk-ranking-selected"' : '') + '>' +
+        '<td>' + (i+1) + '</td><td class="mk-ranking-name">' + safe(r.name) + '</td>' +
+        '<td><b>' + litres(r.qty) + ' L</b></td>' +
+        '<td>' + litres(r.qty / total * 100) + '%</td>' +
+        '<td>' + r.months + '</td><td>' + r.days + '</td>' +
+        '<td>' + (r.billedComplete ? rupees(r.billed) : '—') + '</td></tr>';
+    });
+    result += '</tbody></table></div>' +
+      '<p class="mk-tip">Calculated from archived and live milk records, without double-counting matching customer-months. Billed amounts are sales values, not payments received.</p>' +
+      '</section>';
+    return result;
+  }
+
   function render() {
     if (!$('analysisBuyer') || !getDB) return;
     var db = getDB(), data = collect(db), picker = $('analysisBuyer');
@@ -339,7 +405,8 @@
     if (!amountsComplete) text += '<p class="mk-warn-box">Some months are missing billed amounts or monthly rates. Their billed amounts are shown as unavailable rather than guessed.</p>';
     text += '<p class="mk-tip">Historical archive: ' + archiveCount + ' month(s). Live Entry records are included without duplicating a matching archived customer/month.</p>';
     if (!rows.length) {
-      out.innerHTML = text + '<div class="mk-placeholder">No milk records found for this selection. Import an archive in Settings or enter milk in Entry.</div>';
+      out.innerHTML = text + '<div class="mk-placeholder">No milk records found for this selection. Import an archive in Settings or enter milk in Entry.</div>' +
+        renderCustomerRanking(data, selected, custom, from, to, todayMonth);
       return;
     }
     var max = Math.max.apply(null, rows.map(function (r) { return r.qty; }).concat([1]));
@@ -358,6 +425,7 @@
         (dayCells || 'No individual dates recorded') + '</div></details></td></tr>';
     });
     text += '</tbody></table></div>';
+    text += renderCustomerRanking(data, selected, custom, from, to, todayMonth);
     out.innerHTML = text;
   }
   function init(config) {
