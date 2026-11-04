@@ -288,7 +288,8 @@ body{
   background: var(--white);
   box-shadow: 0 4px 14px var(--shadow);
   -webkit-overflow-scrolling: touch;
-  max-height: min(70vh, 720px);
+  /* Let the main app window handle vertical scrolling. */
+  max-height: none;
 }
 .mk-entry-table, .mk-ledger-table{
   border-collapse: collapse;
@@ -655,7 +656,7 @@ body{
 }
 .mk-analysis-kpis small { display: block; font-size: 12px; color: var(--ink-soft); }
 .mk-analysis-kpis strong { display: block; font-size: 21px; color: var(--red-deep); margin-top: 4px; }
-.mk-analysis-scroll { max-height: min(62vh, 650px); }
+.mk-analysis-scroll { max-height: none; }
 .mk-analysis-table td { min-width: 90px; padding: 9px 12px; }
 .mk-analysis-table td:nth-child(3) { min-width: 150px; }
 .mk-analysis-bar { background: var(--gold); height: 11px; min-width: 2px; border-radius: 8px; }
@@ -938,7 +939,8 @@ body{
   }
 
   /* Daily entry / ledger: less visual noise, sticky headings, clear selection. */
-  .mk-grid-scroll { max-height: min(72vh, 810px); overflow: auto; }
+  /* Wide tables can scroll sideways, but no second vertical scrollbar. */
+  .mk-grid-scroll { max-height: none; overflow-x: auto; overflow-y: auto; }
   .mk-entry-table,
   .mk-ledger-table {
     font-variant-numeric: tabular-nums;
