@@ -1079,14 +1079,22 @@
   }
 
   // ───────────────────────── Ledger ─────────────────────────
+  // User-facing balance sign: NEGATIVE is money still owed by a buyer
+  // (adds to this month's bill), POSITIVE is an advance (deducts).
+  // Persisted openingBalance/adjustment retain the pre-existing convention
+  // for backwards compatibility with ALL JSON backups and older months.
+  function ledgerSignedBalance(calculated) {
+    return -(calculated.opening + calculated.adj);
+  }
+
   function ledgerFooterRows() {
     return [
       { label: 'Total', get: (c) => fmtNum(c.total) },
       { label: 'Rate', get: (c) => fmtNum(c.rate) },
       { label: 'Amount', get: (c) => fmtNum(c.amount) },
       { label: 'Balance', get: (c) => {
-        const bal = c.opening + c.adj;
-        return bal === 0 ? '' : fmtNum(bal);
+        const signed = ledgerSignedBalance(c);
+        return signed === 0 ? '' : fmtNum(signed);
       }},
       { label: 'NET', get: (c) => fmtNum(c.net) }
     ];
@@ -1145,8 +1153,8 @@
           html += `<td><input type="number" step="0.01" inputmode="decimal"
             class="mk-ledger-balance-input" data-ledger-buyer="${escapeHtml(buyer.id)}"
             aria-label="Previous due or advance for ${escapeHtml(buyer.name)} in ${escapeHtml(monthLabel(ym))}"
-            title="Positive: previous due. Negative: advance. Applies only to this month."
-            value="${fmtNum(c.opening + c.adj)}"></td>`;
+            title="Negative: customer paid less (due). Positive: advance paid. Only this month."
+            value="${fmtNum(ledgerSignedBalance(c))}"></td>`;
         } else {
           html += `<td>${row.get(c)}</td>`;
         }
@@ -1275,12 +1283,14 @@
       const amount = raw === '' ? 0 : Number(raw);
       if (!Number.isFinite(amount) || Math.abs(amount) > 1e10) {
         renderLedger();
-        showToast('Enter a valid balance (positive due or negative advance)');
+        showToast('Enter a valid balance (negative due or positive advance)');
         return;
       }
       const previous = entry.openingBalance;
       const adjustment = Number(entry.adjustment) || 0;
-      entry.openingBalance = Math.round((amount - adjustment) * 100) / 100;
+      // The displayed balance has the opposite sign from the legacy
+      // stored openingBalance. NET = milk amount - displayed signed balance.
+      entry.openingBalance = Math.round((-amount - adjustment) * 100) / 100;
       try {
         saveData(DB);
       } catch (error) {
