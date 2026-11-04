@@ -1167,3 +1167,27 @@ body{
     .mk-ranking-highlight strong { font-size: 17px; }
   }
 }
+
+
+/* In-ledger manual balances: a signed amount belongs to the selected month. */
+@media screen {
+  .mk-ledger-balance-input {
+    width: 90px;
+    max-width: 100%;
+    min-height: 30px;
+    padding: 4px 6px;
+    border: 1px solid var(--ui-stroke-strong);
+    border-radius: 7px;
+    background: #fff;
+    color: var(--ink);
+    font: inherit;
+    font-size: 12.5px;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+  }
+  .mk-ledger-balance-input:focus {
+    outline: 2px solid var(--gold);
+    outline-offset: 1px;
+    border-color: var(--gold-deep);
+  }
+}
